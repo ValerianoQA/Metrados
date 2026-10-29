@@ -1,0 +1,25 @@
+{
+  "name": "Cuaderno de Metrados",
+  "short_name": "Metrados",
+  "lang": "es",
+  "description": "Plantillas de metrados y APU para estudiantes de Ingeniería Civil",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F1F3F2",
+  "theme_color": "#1D5B94",
+  "icons": [
+    {
+      "src": "icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

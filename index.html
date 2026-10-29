@@ -1,0 +1,1577 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Plantillas gratis de metrados y APU para estudiantes de Ingeniería Civil (Perú, Norma Técnica de Metrados).">
+<meta name="theme-color" content="#1D5B94">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-180.png">
+<script>
+/* Fuera de claude.ai: el botón de Excel descarga el archivo directamente con el navegador. */
+if (!window.claude) window.claude = { use: async function (name) {
+  if (name !== 'downloads') throw { code: 'unavailable' };
+  return { save: async function (o) {
+    var blob = new Blob([o.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = o.filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  } };
+} };
+if ('serviceWorker' in navigator) addEventListener('load', function () { navigator.serviceWorker.register('sw.js'); });
+</script>
+<title>Cuaderno de Metrados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<script src="xlsx.full.min.js"></script>
+<style>
+/* Layout: cuaderno de obra digital. Índice lateral con la ruta recomendada, hoja tipo Excel a la derecha (celdas amarillas = datos, grises = cálculo). */
+:root{
+  --bg:#F1F3F2; --surface:#FFFFFF; --ink:#1B2024; --muted:#5A636B; --line:#D5DADD; --line-strong:#B6BEC5;
+  --accent:#1D5B94; --accent-ink:#FFFFFF; --accent-soft:#E2EBF4;
+  --in:#FFF4C7; --in-line:#DDBB45; --calc:#ECF0F3; --danger:#B3261E; --ok:#2E7D4F;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14181B; --surface:#1C2125; --ink:#E6E9EB; --muted:#9BA4AC; --line:#323A41; --line-strong:#47515A;
+  --accent:#74A9DB; --accent-ink:#0E1A26; --accent-soft:#1F2D3A;
+  --in:#352F1C; --in-line:#7F6A2C; --calc:#222930; --danger:#F08A80; --ok:#7CC79A; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#14181B; --surface:#1C2125; --ink:#E6E9EB; --muted:#9BA4AC; --line:#323A41; --line-strong:#47515A;
+  --accent:#74A9DB; --accent-ink:#0E1A26; --accent-soft:#1F2D3A;
+  --in:#352F1C; --in-line:#7F6A2C; --calc:#222930; --danger:#F08A80; --ok:#7CC79A; color-scheme:dark }
+
+body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-body)}
+*{box-sizing:border-box}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);gap:32px;max-width:1260px;margin:0 auto;
+  padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Índice */
+.brand{display:flex;flex-direction:column;gap:2px;margin-bottom:18px}
+.brand h1{font:700 30px/1 var(--f-display);letter-spacing:.01em;text-transform:uppercase}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.nav-label{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:18px 0 8px}
+.nav{display:flex;flex-direction:column;gap:2px;list-style:none;margin:0;padding:0}
+.nav button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:baseline;width:100%;padding:8px 10px;border-radius:4px;cursor:pointer;line-height:1.25}
+.nav button:hover{background:var(--accent-soft)}
+.nav button:focus-visible{outline:2px solid var(--accent)}
+.nav button[aria-current="true"]{background:var(--accent);color:var(--accent-ink)}
+.nav .k{font:600 12px var(--f-num);opacity:.7}
+.nav .t{font-weight:600}
+.nav .s{grid-column:2;font-size:12px;opacity:.75}
+.soon{list-style:none;margin:0;padding:0 10px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:13px}
+.soon li::before{content:"○ ";opacity:.6}
+.legend{display:flex;flex-direction:column;gap:6px;margin-top:22px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;gap:8px;align-items:center}
+.sw{width:22px;height:14px;border:1px solid var(--in-line);background:var(--in);border-radius:2px;flex:none}
+.sw.c{background:var(--calc);border-color:var(--line-strong)}
+
+@media (max-width:880px){
+  .app{grid-template-columns:minmax(0,1fr);gap:18px;padding-block:18px 40px}
+  aside{min-width:0}
+  .brand{margin-bottom:8px}
+  .nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:6px;scrollbar-width:thin}
+  .nav li{flex:none}
+  .nav button{border:1px solid var(--line);background:var(--surface);width:auto;grid-template-columns:auto auto;padding:7px 12px}
+  .nav .s,.soon-wrap,.legend-side{display:none}
+  .nav-label.route{display:none}
+}
+
+/* Hoja */
+main{min-width:0;display:flex;flex-direction:column;gap:20px}
+.sheet-head{display:flex;flex-direction:column;gap:6px}
+.eyebrow{margin:0;font:600 12px/1 var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--accent)}
+.sheet-head h2{font:700 clamp(30px,5vw,42px)/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.lead{margin:0;max-width:68ch;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{font:600 12px/1 var(--f-body);padding:5px 8px;border:1px solid var(--line-strong);border-radius:999px;color:var(--muted)}
+.legend-top{display:none;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend-top span{display:flex;gap:6px;align-items:center}
+@media (max-width:880px){.legend-top{display:flex}}
+
+.pane{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+.pane h3{font:700 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin-bottom:14px}
+.pane-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.pane-head h3{margin:0}
+.sheet-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1040px){.sheet-grid{grid-template-columns:minmax(0,1fr)}}
+.res-pane{position:sticky;top:max(16px,env(safe-area-inset-top,0px))}
+@media (max-width:1040px){.res-pane{position:static}}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field label{font-size:13px;font-weight:600;line-height:1.25}
+.cell{display:flex;align-items:center;border-radius:3px;min-width:0}
+.cell.in{background:var(--in);border:1px solid var(--in-line)}
+.cell.in:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.cell input,.cell select{flex:1;min-width:0;border:0;background:transparent;padding:8px 10px;font:500 15px var(--f-num);outline:none}
+.cell select{font-family:var(--f-body);font-weight:600;cursor:pointer}
+.cell .u{padding-right:10px;color:var(--muted);font-size:13px;white-space:nowrap}
+.hint{margin:0;font-size:12px;color:var(--muted);line-height:1.35}
+
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:3px}
+table.grid{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+table.grid th{font:600 11.5px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--calc);border:1px solid var(--line);padding:7px 8px;text-align:left;white-space:nowrap;border-top:0}
+table.grid th.c{text-align:right}
+table.grid td{border:1px solid var(--line);padding:0;vertical-align:middle}
+table.grid tr > :first-child{border-left:0}
+table.grid tr > :last-child{border-right:0}
+table.grid td.in{background:var(--in)}
+table.grid td.in:focus-within{outline:2px solid var(--accent);outline-offset:-2px}
+table.grid td.in input,table.grid td.in select{width:100%;border:0;background:transparent;padding:8px;font:14px var(--f-num);min-width:72px;outline:none}
+table.grid td.in select{font-family:var(--f-body);font-weight:600;min-width:120px;cursor:pointer}
+table.grid td.in input.txt{min-width:150px;font-family:var(--f-body)}
+table.grid td.c{background:var(--calc);padding:8px;text-align:right;font:14px var(--f-num);white-space:nowrap}
+table.grid td.idx,table.grid th.idx{width:34px;text-align:center;color:var(--muted);font:12px var(--f-num);background:var(--calc)}
+table.grid tr.tot td{background:var(--accent-soft);font-weight:700;padding:9px 8px;font-family:var(--f-body)}
+table.grid tr.tot td.num{font-family:var(--f-num);text-align:right}
+.del{all:unset;cursor:pointer;display:block;padding:6px 10px;color:var(--muted);font-size:18px;line-height:1;text-align:center}
+.del:hover{color:var(--danger)}
+.del[data-dup]:hover{color:var(--accent)}
+td.acts{white-space:nowrap}
+td.acts .del{display:inline-block;padding:6px 7px}
+.del:focus-visible{outline:2px solid var(--accent)}
+.table-note{margin:10px 0 0;font-size:13px;color:var(--muted)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);padding:7px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{color:var(--accent-ink);filter:brightness(1.08)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.toast{font-size:13px;color:var(--ok);font-weight:600;align-self:center}
+
+table.res{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.res td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:baseline}
+table.res td.v{text-align:right;font:600 15px var(--f-num);white-space:nowrap;padding-left:10px}
+table.res td.u{width:1%;white-space:nowrap;color:var(--muted);font-size:13px;padding-left:6px}
+table.res tr.main td{padding:10px 0}
+table.res tr.main td.l{font-weight:700}
+table.res tr.main td.v{font-size:22px;color:var(--accent)}
+table.res tr.sub td.l{padding-left:14px;color:var(--muted);font-size:14px}
+table.res tr.sub td.v{font-weight:400;font-size:14px}
+table.res tr.sec td{border-bottom:0;padding-top:16px;font:600 11.5px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.buy{display:block;font:400 12px var(--f-body);color:var(--muted)}
+
+.explain{display:flex;flex-direction:column;gap:12px;max-width:76ch}
+.explain p,.explain ul{margin:0}
+.explain ul{padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.explain h4{font:700 17px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin-top:8px}
+.formula{font:600 15px/1.5 var(--f-num);background:var(--calc);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 3px 3px 0;overflow-x:auto;white-space:nowrap}
+.formula small{display:block;font-weight:400;color:var(--muted);font-size:13px;white-space:normal}
+.ref{overflow-x:auto}
+.ref table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;min-width:100%}
+.ref th,.ref td{border:1px solid var(--line);padding:6px 10px;text-align:right;white-space:nowrap}
+.ref th{background:var(--calc);font-weight:600}
+.ref th:first-child,.ref td:first-child{text-align:left}
+.ref tr.on td{background:var(--accent-soft);font-weight:700}
+.warn{font-size:13px;color:var(--muted);border-top:1px dashed var(--line-strong);padding-top:10px}
+:root{--conc:#C7CDD3;--conc-hi:#9DBCDB;--brick:#CF8862;--soil:#B39B76;--form:#E07B1F;--rebar:#B23A2E;--mortar:#E4DFD3}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--conc:#56606A;--conc-hi:#3F6A93;--brick:#93573F;--soil:#7A6748;--form:#F29A4A;--rebar:#F07D6E;--mortar:#3A3731} }
+:root[data-theme="dark"]{--conc:#56606A;--conc-hi:#3F6A93;--brick:#93573F;--soil:#7A6748;--form:#F29A4A;--rebar:#F07D6E;--mortar:#3A3731}
+.nav-group{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:14px 10px 6px}
+.nav li:first-child.nav-group{padding-top:4px}
+@media (max-width:880px){.nav-group{display:none}}
+table.grid td.na{background:var(--calc);color:var(--muted);text-align:center;font:13px var(--f-num);min-width:72px}
+.fig-pane{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:center}
+@media (max-width:760px){.fig-pane{grid-template-columns:minmax(0,1fr)}}
+.fig svg{display:block;width:100%;max-width:560px;height:auto}
+.fig-cap{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.fig-cap .formula{white-space:normal}
+.fig-cap .tag{font:600 11.5px/1 var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
+.fig .ln{stroke:var(--ink);stroke-width:1.4;fill:none}
+.fig .gl{stroke:var(--ink);stroke-width:2;fill:none}
+.fig .cc{fill:var(--conc);stroke:var(--ink);stroke-width:1.4}
+.fig .hi{fill:var(--conc-hi);stroke:var(--accent);stroke-width:2.2}
+.fig .hole{fill:var(--surface);stroke:var(--ink);stroke-width:1.2;stroke-dasharray:5 4}
+.fig .soil{fill:url(#hatch);stroke:none}
+.fig .soilbg{fill:var(--soil);opacity:.35;stroke:none}
+.fig .hatch-ln{stroke:var(--soil);stroke-width:1.5}
+.fig .bk{fill:var(--brick);stroke:var(--ink);stroke-width:.8}
+.fig .mo{fill:var(--mortar);stroke:var(--ink);stroke-width:1}
+.fig .fm{stroke:var(--form);stroke-width:5;stroke-linecap:round;fill:none}
+.fig .rb{stroke:var(--rebar);stroke-width:2.2;fill:none}
+.fig .rbf{fill:var(--rebar);stroke:none}
+.fig .dm{stroke:var(--accent);stroke-width:1.1;fill:none}
+.fig text{font:12.5px var(--f-num);fill:var(--muted)}
+.fig text.dt{fill:var(--accent);font-weight:600}
+.fig text.lb{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.fig .bgfill{fill:var(--surface)}
+.key{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--muted)}
+.key i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <aside>
+    <div class="brand">
+      <h1>Cuaderno de Metrados</h1>
+      <p>Plantillas para estudiantes de Ing. Civil · Perú</p>
+    </div>
+    <ul class="nav" id="nav"></ul>
+    <div class="soon-wrap">
+      <p class="nav-label">Próximas plantillas</p>
+      <ul class="soon">
+        <li>Contrapisos, pisos y zócalos</li>
+        <li>Escaleras</li>
+        <li>Cisterna y tanque elevado</li>
+        <li>Resumen de materiales</li>
+        <li>Presupuesto (metrado × APU)</li>
+        <li>Fórmula polinómica</li>
+      </ul>
+    </div>
+    <div class="export-side" hidden><p class="nav-label">Exportar</p><button class="btn primary" type="button" data-act="xlsx">Descargar Excel (.xlsx)</button><p class="hint" style="margin-top:6px">Un libro con una hoja por plantilla.</p></div>
+    <div class="legend legend-side">
+      <span><i class="sw"></i>Celda que tú llenas</span>
+      <span><i class="sw c"></i>Celda que se calcula sola</span>
+    </div>
+  </aside>
+  <main id="sheet"></main>
+</div>
+
+<script>
+/* ---------- utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const n = v => { const x = parseFloat(String(v ?? '').replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : 0; };
+const f = (x, d = 2) => (isFinite(x) ? x : 0).toLocaleString('es-PE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const sum = (arr, k) => arr.reduce((a, r) => a + (r[k] || 0), 0);
+const opts = list => list.map(x => Array.isArray(x) ? x : [x, x]);
+
+/* ---------- tablas de referencia (valores usuales en Perú, referenciales) ---------- */
+const MORTERO = {
+  '1:3': { cem: 11.2, arena: 0.95, agua: 0.24 },
+  '1:4': { cem: 8.9, arena: 1.00, agua: 0.25 },
+  '1:5': { cem: 7.4, arena: 1.05, agua: 0.26 },
+  '1:6': { cem: 6.3, arena: 1.07, agua: 0.27 }
+};
+const CONC = {
+  '140': { lbl: "f'c = 140 kg/cm²", cem: 7.01, arena: 0.51, piedra: 0.64, agua: 0.184 },
+  '175': { lbl: "f'c = 175 kg/cm²", cem: 8.43, arena: 0.54, piedra: 0.55, agua: 0.185 },
+  '210': { lbl: "f'c = 210 kg/cm²", cem: 9.73, arena: 0.52, piedra: 0.53, agua: 0.186 },
+  '245': { lbl: "f'c = 245 kg/cm²", cem: 11.50, arena: 0.50, piedra: 0.51, agua: 0.187 },
+  '280': { lbl: "f'c = 280 kg/cm²", cem: 13.34, arena: 0.45, piedra: 0.51, agua: 0.189 },
+  'sol': { lbl: 'C:H 1:12 (solado)', cem: 3.50, hormigon: 1.20, agua: 0.12 },
+  'cim': { lbl: 'C:H 1:10 + 30% PG', cem: 2.90, hormigon: 0.83, pg: 0.48, agua: 0.08 },
+  'fz': { lbl: 'C:H 1:12 + 30% PG', cem: 2.47, hormigon: 0.84, pg: 0.48, agua: 0.08 },
+  'sob': { lbl: 'C:H 1:8 + 25% PM', cem: 3.70, hormigon: 0.86, pm: 0.40, agua: 0.10 }
+};
+const FC_ARM = ['140', '175', '210', '245', '280'].map(k => [k, CONC[k].lbl]);
+const FC_ALL = Object.entries(CONC).map(([k, v]) => [k, v.lbl]);
+const ACERO = [
+  ['d6', '6 mm', 0.222], ['d8', '8 mm', 0.395], ['d38', '3/8"', 0.560], ['d12', '12 mm', 0.888],
+  ['d12i', '1/2"', 0.994], ['d58', '5/8"', 1.552], ['d34', '3/4"', 2.235], ['d1', '1"', 3.973]
+];
+const ACERO_MAP = Object.fromEntries(ACERO.map(([k, l, p]) => [k, { l, p }]));
+const LADRILLOS = {
+  kk18: { l: 'King Kong 18 huecos', L: 24, a: 13, h: 9 },
+  kkm: { l: 'King Kong macizo', L: 24, a: 13, h: 9 },
+  pand: { l: 'Pandereta lisa', L: 23, a: 11, h: 9 },
+  pandr: { l: 'Pandereta raya', L: 23, a: 11, h: 9 },
+  bc14: { l: 'Bloque de concreto 14 cm', L: 39, a: 14, h: 19 },
+  bc9: { l: 'Bloque de concreto 9 cm', L: 39, a: 9, h: 19 },
+  cust: { l: 'Personalizado (ver Datos)' }
+};
+const APAREJO = [['soga', 'Soga'], ['cabeza', 'Cabeza'], ['canto', 'Canto']];
+const MAT_LBL = {
+  cem: ['Cemento portland (bolsa 42.5 kg)', 'bls', 2],
+  arena: ['Arena', 'm³', 3],
+  piedra: ['Piedra chancada ½"', 'm³', 3],
+  hormigon: ['Hormigón', 'm³', 3],
+  pg: ['Piedra grande (máx. 10")', 'm³', 3],
+  pm: ['Piedra mediana (máx. 4")', 'm³', 3],
+  agua: ['Agua', 'm³', 3]
+};
+function addMats(acc, dos, vol) { for (const k of Object.keys(MAT_LBL)) if (dos[k]) acc[k] = (acc[k] || 0) + dos[k] * vol; }
+function matsOut(m, arenaLbl) {
+  return Object.keys(MAT_LBL).filter(k => m[k] > 0).map(k => {
+    const [l, u, d] = MAT_LBL[k];
+    return { l: k === 'arena' ? arenaLbl : l, v: m[k], u, d, buy: k === 'cem' ? `Comprar ${Math.ceil(m[k] - 1e-9)} bolsas` : '' };
+  });
+}
+function refTable(head, rows, onKey) {
+  return `<div class="ref"><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${rows.map(r => `<tr${r.key === onKey ? ' class="on"' : ''}>${r.cells.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+}
+function concRef(used) {
+  return refTable(['Mezcla (por m³)', 'Cemento (bls)', 'Arena u hormigón (m³)', 'Piedra (m³)', 'Agua (m³)'],
+    Object.entries(CONC).filter(([k]) => used.includes(k)).map(([k, d]) => ({ key: null, cells: [d.lbl, f(d.cem), f(d.arena || d.hormigon || 0), f(d.piedra || d.pg || d.pm || 0), f(d.agua, 3)] })), 'x');
+}
+function morteroRef(key) {
+  return refTable(['Mortero C:A (por m³)', 'Cemento (bls)', 'Arena (m³)', 'Agua (m³)'],
+    Object.entries(MORTERO).map(([k, d]) => ({ key: k, cells: [k, f(d.cem, 1), f(d.arena), f(d.agua)] })), key);
+}
+const DOS_NOTE = '<p class="warn">Las dosificaciones son valores referenciales de tablas usuales en Perú (tipo CAPECO). Para un expediente real usa el diseño de mezcla de tu obra o lo que indique tu docente.</p>';
+
+/* ---------- dibujo de esquemas (SVG) ---------- */
+const S = {
+  r: (x, y, w, h, c = 'cc') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" class="${c}"/>`,
+  l: (x1, y1, x2, y2, c = 'ln') => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${c}"/>`,
+  p: (pts, c = 'cc') => `<polygon points="${pts}" class="${c}"/>`,
+  c: (x, y, r, c = 'rbf') => `<circle cx="${x}" cy="${y}" r="${r}" class="${c}"/>`,
+  t: (x, y, s, c = '', a = 'middle') => `<text x="${x}" y="${y}" class="${c}" text-anchor="${a}">${s}</text>`
+};
+const dH = (x1, x2, y, s, below) => S.l(x1, y, x2, y, 'dm') + S.l(x1, y - 5, x1, y + 5, 'dm') + S.l(x2, y - 5, x2, y + 5, 'dm') + S.t((x1 + x2) / 2, below ? y + 16 : y - 7, s, 'dt');
+const dV = (x, y1, y2, s, side = 1) => S.l(x, y1, x, y2, 'dm') + S.l(x - 5, y1, x + 5, y1, 'dm') + S.l(x - 5, y2, x + 5, y2, 'dm') + S.t(x + side * 8, (y1 + y2) / 2 + 4, s, 'dt', side > 0 ? 'start' : 'end');
+const svg = (body, h = 240, label = 'Esquema') => `<svg viewBox="0 0 580 ${h}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="9" class="hatch-ln"/></pattern></defs>${body}</svg>`;
+const soil = (x, y, w, h) => S.r(x, y, w, h, 'soilbg') + S.r(x, y, w, h, 'soil');
+
+function figExc(tipo) {
+  const zap = /Zapata|Platea|Cisterna/.test(tipo), zanja = /Zanja/.test(tipo), cim = /Cimiento/.test(tipo), viga = /Viga/.test(tipo);
+  let b = soil(20, 50, 520, 175) + S.t(24, 40, 'Nivel de terreno natural', 'lb', 'start');
+  if (zap) {
+    b += S.r(170, 50, 220, 145, 'hole') + S.r(200, 150, 160, 45, 'cc') + S.r(268, 50, 24, 100, 'cc') + S.t(280, 178, 'zapata', 'lb');
+    b += dH(170, 390, 30, 'L + 2s (o A + 2s)') + dH(170, 200, 212, 's', true) + dH(360, 390, 212, 's', true) + dV(405, 50, 195, 'H');
+  } else if (zanja) {
+    b += S.r(240, 50, 80, 110, 'hole') + S.c(280, 140, 12, 'cc') + dH(240, 320, 30, 'A') + dV(335, 50, 160, 'H');
+  } else if (viga) {
+    b += S.r(220, 50, 120, 90, 'hole') + S.r(235, 70, 90, 70, 'cc') + dH(220, 340, 30, 'A') + dV(355, 50, 140, 'H');
+  } else {
+    b += S.r(220, 50, 120, 140, 'hole') + S.r(220, 100, 120, 90, 'cc') + S.r(262, 40, 36, 60, 'cc') + S.r(264, 0, 32, 40, 'bk');
+    b += S.t(280, 150, cim ? 'cimiento' : 'elemento', 'lb') + dH(220, 340, 212, 'A', true) + dV(355, 50, 190, 'H');
+  }
+  b += S.l(20, 50, 540, 50, 'gl');
+  return svg(b, 240, 'Corte de excavación');
+}
+
+function figZap(tipo) {
+  let p = '', e = '';
+  const ground = S.l(300, 100, 545, 100, 'gl') + S.t(545, 94, 'terreno', '', 'end');
+  const col = (x, y) => S.r(x, y, 22, 22, 'cc');
+  if (/Combinada trapezoidal/.test(tipo)) {
+    p = S.p('40,40 240,70 240,170 40,200', 'hi') + col(70, 109) + col(200, 109) + dH(40, 240, 26, 'L') + dV(26, 40, 200, 'B', -1) + dV(252, 70, 170, 'B₂');
+    e = S.r(310, 150, 230, 45, 'hi') + S.r(335, 40, 20, 110) + S.r(495, 40, 20, 110) + dV(548, 150, 195, 'h');
+  } else if (/Combinada|Platea/.test(tipo)) {
+    const pl = /Platea/.test(tipo);
+    p = S.r(30, 50, 220, 130, 'hi') + (pl ? [60, 129, 198].map(x => col(x, 66) + col(x, 142)).join('') : col(60, 104) + col(198, 104)) + dH(30, 250, 36, 'L') + dV(262, 50, 180, 'B');
+    e = S.r(310, pl ? 160 : 150, 230, pl ? 30 : 45, 'hi') + S.r(330, 40, 20, pl ? 120 : 110) + S.r(500, 40, 20, pl ? 120 : 110) + dV(548, pl ? 160 : 150, pl ? 190 : 195, 'h');
+  } else if (/Conectada|Viga de conexión/.test(tipo)) {
+    const vh = /Viga/.test(tipo);
+    p = S.r(30, 70, 70, 90, vh ? 'cc' : 'hi') + S.r(165, 60, 90, 110, 'cc') + S.r(100, 105, 65, 20, vh ? 'hi' : 'cc') + col(34, 104) + col(200, 104) + dH(100, 165, 54, 'L viga') + S.t(65, 185, 'zap. exterior', '') + S.t(210, 190, 'zap. interior', '');
+    e = S.r(310, 150, 70, 45, vh ? 'cc' : 'hi') + S.r(460, 150, 80, 45) + S.r(380, 150, 80, 30, vh ? 'hi' : 'cc') + S.r(312, 40, 20, 110) + S.r(490, 40, 20, 110) + dV(424, 150, 180, 'h', 1);
+  } else if (/talud/.test(tipo)) {
+    p = S.r(40, 40, 200, 150, 'hi') + S.r(115, 95, 50, 40, 'cc') + S.l(40, 40, 115, 95) + S.l(240, 40, 165, 95) + S.l(40, 190, 115, 135) + S.l(240, 190, 165, 135) + dH(40, 240, 26, 'L') + dV(252, 40, 190, 'B') + dH(115, 165, 150, 'a₂', true);
+    e = S.r(310, 165, 230, 30, 'hi') + S.p('310,165 400,120 450,120 540,165', 'hi') + S.r(414, 30, 22, 90) + dV(548, 165, 195, 'h') + dV(548, 120, 165, 'h₂') + dH(400, 450, 112, 'a₂');
+  } else if (/Escalonada/.test(tipo)) {
+    p = S.r(40, 40, 200, 150, 'hi') + S.r(90, 75, 100, 80, 'hi') + col(129, 104) + dH(40, 240, 26, 'L') + dV(252, 40, 190, 'B') + dH(90, 190, 170, 'a₂', true);
+    e = S.r(310, 165, 230, 30, 'hi') + S.r(370, 135, 110, 30, 'hi') + S.r(414, 30, 22, 105) + dV(548, 165, 195, 'h') + dV(490, 135, 165, 'h₂');
+  } else if (/Pedestal/.test(tipo)) {
+    p = S.r(40, 40, 200, 150) + S.r(110, 85, 60, 60, 'hi') + col(129, 104) + dH(110, 170, 74, 'L') + dV(182, 85, 145, 'B');
+    e = S.r(320, 160, 210, 35) + S.r(395, 95, 60, 65, 'hi') + S.r(414, 30, 22, 65) + dV(548, 95, 160, 'h');
+  } else {
+    const ex = /excéntrica/.test(tipo), es = /esquinera/.test(tipo);
+    const cx = es || ex ? 40 : 129, cy = es ? 40 : 104;
+    p = S.r(40, 40, 200, 150, 'hi') + col(cx, cy) + dH(40, 240, 26, 'L') + dV(252, 40, 190, 'B') + (ex || es ? S.t(30, 220, 'lindero', '', 'start') + S.l(40, 30, 40, 205, 'gl') : '');
+    e = S.r(320, 150, 210, 45, 'hi') + S.r(ex || es ? 320 : 414, 40, 22, 110) + dV(548, 150, 195, 'h') + dH(320, 530, 215, 'L', true);
+  }
+  const body = soil(300, 100, 245, 120) + S.t(140, 246, 'Planta', 'lb') + S.t(425, 246, 'Elevación', 'lb') + p + e + ground;
+  return svg(body, 254, 'Planta y elevación de zapata');
+}
+
+function figCim(tipo) {
+  const h = k => (tipo.includes(k) ? 'hi' : 'cc');
+  let b = soil(20, 90, 250, 140) + soil(290, 90, 250, 140);
+  b += S.r(80, 120, 120, 100, /Cimiento/.test(tipo) ? 'hi' : 'cc') + S.r(122, 60, 36, 60, /Sobrecimiento/.test(tipo) ? 'hi' : 'cc') + S.r(124, 6, 32, 54, 'bk');
+  b += dH(80, 200, 228, 'A', false) + dV(66, 120, 220, 'H', -1) + dH(122, 158, 52, 'b') + dV(170, 60, 120, 'h') + S.t(140, 175, 'cimiento', 'lb');
+  b += S.r(360, 140, 140, 35) + S.r(420, 30, 20, 110) + S.r(345, 175, 170, 10, /Solado/.test(tipo) ? 'hi' : 'cc') + S.r(345, 185, 170, 40, /Falsa|Calzadura/.test(tipo) ? 'hi' : 'cc');
+  b += S.t(430, 163, 'zapata', 'lb') + S.t(522, 184, 'solado', 'lb', 'start') + S.t(430, 210, 'falsa zapata', 'lb') + dV(530, 175, 185, '', 1);
+  b += S.l(20, 90, 270, 90, 'gl') + S.l(290, 90, 540, 90, 'gl');
+  return svg(b, 245, 'Corte de cimiento corrido y zapata con solado');
+}
+
+function figElev(tipo) {
+  const col = /Columna|Placa/.test(tipo), vig = /Viga/.test(tipo), los = /Losa/.test(tipo);
+  let b = soil(20, 200, 520, 40);
+  b += S.r(50, 200, 80, 30) + S.r(410, 200, 80, 30);
+  b += S.r(80, 42, 20, 158, col ? 'hi' : 'cc') + S.r(440, 42, 20, 158, col ? 'hi' : 'cc');
+  b += S.r(100, 42, 340, 30, vig ? 'hi' : 'cc') + S.r(40, 30, 460, 12, los ? 'hi' : 'cc');
+  b += S.l(20, 200, 540, 200, 'gl');
+  if (col) b += dV(480, 30, 200, 'H') + dH(80, 100, 230, 'a', true);
+  else if (vig) b += dH(100, 440, 100, 'L entre caras de columnas') + dV(50, 30, 72, 'h total', -1);
+  else if (los) b += dV(520, 30, 42, 'e') + dH(100, 440, 22, 'losa: área entre caras de vigas');
+  else b += S.t(270, 130, 'Mide el elemento como prisma: N° × L × A × H', 'lb');
+  return svg(b, 250, 'Pórtico con zapatas, columnas, viga y losa');
+}
+
+function figEnc(tipo) {
+  let b = '';
+  const fm = (x1, y1, x2, y2) => S.l(x1, y1, x2, y2, 'fm');
+  if (/Columna aislada|Zapata/.test(tipo)) {
+    b = S.r(220, 60, 120, 100) + fm(220, 60, 340, 60) + fm(220, 160, 340, 160) + fm(220, 60, 220, 160) + fm(340, 60, 340, 160) + dH(220, 340, 44, 'a') + dV(356, 60, 160, 'b');
+  } else if (/confinada/.test(tipo)) {
+    b = S.r(90, 75, 130, 70, 'bk') + S.r(340, 75, 130, 70, 'bk') + S.r(220, 75, 120, 70) + fm(220, 75, 340, 75) + fm(220, 145, 340, 145) + dH(220, 340, 58, 'a') + S.t(155, 170, 'muro', 'lb') + S.t(405, 170, 'muro', 'lb');
+  } else if (/esquina/.test(tipo)) {
+    b = S.r(90, 75, 130, 70, 'bk') + S.r(220, 145, 120, 90, 'bk') + S.r(220, 75, 120, 70) + fm(220, 75, 340, 75) + fm(340, 75, 340, 145) + dH(220, 340, 58, 'a') + dV(356, 75, 145, 'b');
+  } else if (/extremo/.test(tipo)) {
+    b = S.r(90, 75, 130, 70, 'bk') + S.r(220, 75, 120, 70) + fm(220, 75, 340, 75) + fm(220, 145, 340, 145) + fm(340, 75, 340, 145) + dH(220, 340, 58, 'a') + dV(356, 75, 145, 'b');
+  } else if (/Viga interior/.test(tipo)) {
+    b = S.r(90, 50, 380, 30) + S.r(240, 80, 80, 100) + fm(240, 180, 320, 180) + fm(240, 80, 240, 180) + fm(320, 80, 320, 180) + dH(240, 320, 200, 'b', true) + dV(340, 50, 180, 'h') + dV(80, 50, 80, 'e', -1);
+  } else if (/Viga perimetral/.test(tipo)) {
+    b = S.r(90, 50, 230, 30) + S.r(240, 80, 80, 100) + fm(240, 180, 320, 180) + fm(240, 80, 240, 180) + fm(320, 50, 320, 180) + dH(240, 320, 200, 'b', true) + dV(340, 50, 180, 'h') + dV(80, 50, 80, 'e', -1);
+  } else if (/Viga chata/.test(tipo)) {
+    b = S.r(90, 80, 380, 40) + S.r(230, 80, 100, 40, 'hi') + fm(230, 120, 330, 120) + dH(230, 330, 140, 'b', true);
+  } else if (/conexión/.test(tipo)) {
+    b = soil(60, 170, 440, 40) + S.r(240, 70, 80, 100) + fm(240, 70, 240, 170) + fm(320, 70, 320, 170) + dV(340, 70, 170, 'h') + S.l(60, 170, 500, 170, 'gl');
+  } else if (/Sobrecimiento/.test(tipo)) {
+    const una = /1 cara/.test(tipo);
+    b = soil(60, 140, 440, 80) + S.r(220, 140, 120, 80) + S.r(262, 40, 36, 100) + (una ? soil(140, 40, 122, 100) : fm(262, 40, 262, 140)) + fm(298, 40, 298, 140) + dV(320, 40, 140, 'h') + S.l(60, 140, 500, 140, 'gl');
+  } else if (/aligerada/.test(tipo)) {
+    b = S.r(60, 70, 440, 20) + [0, 1, 2, 3].map(i => S.r(60 + i * 115, 90, 25, 60) + S.r(85 + i * 115, 90, 90, 60, 'bk')).join('') + fm(60, 150, 500, 150) + S.t(280, 180, 'se encofra todo el fondo del paño', 'lb');
+  } else if (/maciza/.test(tipo)) {
+    b = S.r(60, 90, 440, 40) + fm(60, 130, 500, 130) + S.t(280, 165, 'fondo del paño', 'lb');
+  } else if (/Placa/.test(tipo)) {
+    b = S.r(100, 95, 360, 35) + fm(100, 95, 460, 95) + fm(100, 130, 460, 130) + dH(100, 460, 80, 'largo de placa') + S.t(280, 165, 'planta', 'lb');
+  } else {
+    b = S.t(280, 120, 'Escribe el desarrollo directamente en Medida 1', 'lb');
+  }
+  b += `<line x1="380" y1="226" x2="410" y2="226" class="fm"/>` + S.t(418, 230, 'cara encofrada', '', 'start');
+  return svg(b, 240, 'Corte del elemento con las caras encofradas');
+}
+
+function figAcero() {
+  let b = S.r(50, 40, 140, 140) + S.r(64, 54, 112, 112, 'rb') + S.l(64, 54, 84, 74, 'rb') + S.l(70, 54, 90, 74, 'rb');
+  b += [[74, 64], [166, 64], [74, 156], [166, 156], [120, 64], [120, 156]].map(([x, y]) => S.c(x, y, 6)).join('');
+  b += dH(50, 190, 28, 'a') + dV(36, 40, 54, 'r', -1) + S.t(120, 205, 'Columna: barras + estribo', 'lb') + S.t(120, 222, 'con ganchos a 135°', '');
+  b += S.r(270, 40, 260, 160);
+  for (let x = 284; x <= 516; x += 29) b += S.l(x, 46, x, 194, 'rb');
+  for (let y = 54; y <= 186; y += 33) b += S.l(276, y, 524, y, 'rb');
+  b += dH(284, 313, 28, 's') + dH(270, 530, 222, 'B (ancho a cubrir)', false) + dV(540, 40, 54, 'r');
+  return svg(b, 240, 'Sección de columna y parrilla de zapata');
+}
+
+
+/* estribos: lectura de la distribución del plano, p. ej. "1@0.05, 8@0.10, r@0.25" */
+function parseDist(str, Ln) {
+  const t = String(str || '').trim();
+  if (!t) return { ok: false, count: 0, pos: [], msg: 'Escribe la distribución o el N° de estribos.' };
+  if (/^\d+$/.test(t)) { const c = +t; return { ok: true, simple: true, count: c, pos: Array.from({ length: c }, (_, i) => c > 1 ? i * Ln / (c - 1) : Ln / 2) }; }
+  const groups = []; let resto = null;
+  for (const p of t.split(/[,;]+/).map(x => x.trim()).filter(Boolean)) {
+    const m = p.match(/^(\d+|r|rto|resto)\s*@\s*([\d.,]+)$/i);
+    if (!m || n(m[2]) <= 0) return { ok: false, count: 0, pos: [], msg: `No entiendo “${esc(p)}”. Usa el formato 1@0.05, 8@0.10, r@0.25` };
+    if (/^\d+$/.test(m[1])) groups.push({ n: +m[1], s: n(m[2]) }); else resto = n(m[2]);
+  }
+  const pos = []; let x = 0;
+  groups.forEach(g => { for (let i = 0; i < g.n; i++) { x += g.s; pos.push(x); } });
+  const rem = Ln - 2 * x, nc = resto && rem > 0 ? Math.max(Math.ceil(rem / resto - 1e-9) - 1, 0) : 0;
+  const all = [...pos];
+  for (let i = 1; i <= nc; i++) all.push(x + i * rem / (nc + 1));
+  pos.slice().reverse().forEach(p => all.push(Ln - p));
+  return { ok: true, groups, resto, perEnd: pos.length, used: x, rem, nc, count: 2 * pos.length + nc, pos: all, over: rem < -1e-9 };
+}
+const ESTRIBOS = [
+  ['rect', 'Rectangular cerrado (simple)'], ['grapa1', 'Rectangular + 1 grapa'], ['grapa2', 'Rectangular + 2 grapas'],
+  ['doble', 'Doble estribo (2 rectangulares)'], ['rombo', 'Rectangular + rombo'], ['circ', 'Circular cerrado'],
+  ['esp', 'Espiral (zuncho)'], ['u', 'Estribo en U (abierto)'], ['grapa', 'Grapa o gancho suelto']
+];
+const EST_MAP = Object.fromEntries(ESTRIBOS);
+
+function figEst(row, s, info) {
+  if (!row) return '';
+  const a = n(row.a) || 0.25, b = n(row.b) || a, circ = /circ|esp/.test(row.tipo);
+  const k = 150 / Math.max(a, circ ? a : b), W = a * k, H = (circ ? a : b) * k, X = 30 + (150 - W) / 2, Y = 30 + (150 - H) / 2;
+  const rc = Math.min(n(s.rc) * k, W / 4, H / 4) || 8, x1 = X + rc, y1 = Y + rc, x2 = X + W - rc, y2 = Y + H - rc;
+  let b2 = '';
+  const hook = (x, y) => S.l(x, y, x + 16, y + 16, 'rb') + S.l(x + 6, y, x + 22, y + 16, 'rb');
+  const bar = (x, y) => S.c(x, y, 5);
+  if (circ) {
+    const cx = X + W / 2, cy = Y + H / 2, R = W / 2;
+    b2 += `<circle cx="${cx}" cy="${cy}" r="${R}" class="cc"/><circle cx="${cx}" cy="${cy}" r="${R - rc}" class="rb"/>`;
+    for (let i = 0; i < 6; i++) { const t = i * Math.PI / 3; b2 += bar(cx + (R - rc - 7) * Math.cos(t), cy + (R - rc - 7) * Math.sin(t)); }
+    b2 += dH(X, X + W, 22, 'D');
+  } else {
+    b2 += S.r(X, Y, W, H) + dH(X, X + W, 22, 'a') + dV(X + W + 12, Y, Y + H, 'b');
+    const t = row.tipo;
+    if (t === 'u') b2 += `<polyline points="${x1},${y1} ${x1},${y2} ${x2},${y2} ${x2},${y1}" class="rb"/>`;
+    else if (t !== 'grapa') b2 += S.r(x1, y1, x2 - x1, y2 - y1, 'rb') + hook(x1, y1);
+    if (t === 'doble') { const w3 = (x2 - x1) * 2 / 3; b2 += S.r(x1 + 3, y1 + 3, w3, y2 - y1 - 6, 'rb') + S.r(x2 - 3 - w3, y1 + 3, w3, y2 - y1 - 6, 'rb'); }
+    if (t === 'rombo') { const mx = (x1 + x2) / 2, my = (y1 + y2) / 2; b2 += S.p(`${mx},${y1} ${x2},${my} ${mx},${y2} ${x1},${my}`, 'rb'); }
+    const gr = xx => S.l(xx, y1, xx, y2, 'rb') + S.l(xx, y1, xx + 10, y1 + 10, 'rb') + S.l(xx, y2, xx - 10, y2 - 10, 'rb');
+    if (t === 'grapa1' || t === 'grapa') b2 += gr((x1 + x2) / 2);
+    if (t === 'grapa2') b2 += gr(x1 + (x2 - x1) / 3) + gr(x1 + 2 * (x2 - x1) / 3);
+    const pts = [[x1 + 6, y1 + 6], [x2 - 6, y1 + 6], [x1 + 6, y2 - 6], [x2 - 6, y2 - 6]];
+    if (/grapa|doble|rombo/.test(t)) pts.push([(x1 + x2) / 2, y1 + 6], [(x1 + x2) / 2, y2 - 6]);
+    if (t === 'grapa2' || t === 'doble') pts.push([x1 + (x2 - x1) / 3, y1 + 6], [x1 + 2 * (x2 - x1) / 3, y1 + 6], [x1 + (x2 - x1) / 3, y2 - 6], [x1 + 2 * (x2 - x1) / 3, y2 - 6]);
+    b2 += pts.map(([px, py]) => bar(px, py)).join('');
+  }
+  b2 += S.t(105, 205, 'Sección', 'lb');
+  // distribución a lo largo del elemento
+  const Ln = n(row.Ln), L0 = 250, L1 = 560, sc = Ln > 0 ? (L1 - L0) / Ln : 0;
+  b2 += S.r(L0 - 14, 80, 14, 70) + S.r(L1, 80, 14, 70) + S.r(L0, 95, L1 - L0, 40, 'mo');
+  if (info && info.ok && sc && !/esp/.test(row.tipo)) {
+    info.pos.forEach(p => { if (p >= 0 && p <= Ln) b2 += S.l(L0 + p * sc, 95, L0 + p * sc, 135, 'rb'); });
+    if (!info.simple && info.used > 0 && !info.over) {
+      const u = info.used * sc;
+      b2 += dH(L0, L0 + u, 168, f(info.used) + ' m', true) + dH(L1 - u, L1, 168, f(info.used) + ' m', true);
+      if (info.nc) b2 += S.t((L0 + L1) / 2, 186, `resto @ ${f(info.resto)}`, 'dt');
+    }
+  } else if (/esp/.test(row.tipo) && sc) {
+    const paso = n(row.dist) || 0.05;
+    let d = ''; for (let x = 0; x <= Ln + 1e-9; x += paso) { const px = L0 + x * sc; d += `M${px.toFixed(1)},95 L${(px + paso * sc / 2).toFixed(1)},135 `; }
+    b2 += `<path d="${d}" class="rb"/>`;
+  }
+  b2 += dH(L0, L1, 70, `Ln = ${f(Ln)} m (luz o altura libre)`) + S.t((L0 + L1) / 2, 222, 'Distribución a lo largo del elemento', 'lb');
+  return svg(b2, 235, 'Sección con estribos y distribución');
+}
+
+function figLosa(s) {
+  const k = 3, bw = n(s.bw) * 100 * k, wl = n(s.wl) * 100 * k, h = n(s.h) * 100 * k, tl = n(s.tl) * 100 * k;
+  const top = 40, bot = top + h; let b = '';
+  b += S.r(20, top, 520, tl);
+  for (let x = 20; x < 540; x += bw + wl) { b += S.r(x, top + tl, Math.min(bw, 540 - x), h - tl); b += S.c(x + bw / 2, bot - 8, 4); if (x + bw < 540) b += S.r(x + bw, top + tl, Math.min(wl, 540 - x - bw), h - tl, 'bk'); }
+  b += dH(20, 20 + bw, bot + 18, f(n(s.bw) * 100, 0), true) + dH(20 + bw, 20 + bw + wl, bot + 18, f(n(s.wl) * 100, 0) + ' cm', true);
+  b += dV(548, top, bot, 'h', -1) + S.t(280, top - 10, `losa superior ${f(n(s.tl) * 100, 0)} cm`, 'lb') + S.t(20 + bw + wl / 2, top + tl + (h - tl) / 2 + 4, 'ladrillo', 'lb') + S.t(20 + bw / 2, bot + 48, 'vigueta', 'lb');
+  return svg(b, bot + 60, 'Corte de losa aligerada');
+}
+
+function ladDims(key, s) { const d = LADRILLOS[key]; return d && d.L ? d : { L: n(s.cL), a: n(s.ca), h: n(s.ch) }; }
+function brickGeom(d, ap) {
+  const vw = ap === 'cabeza' ? d.a : d.L, vh = ap === 'canto' ? d.a : d.h, esp = ap === 'cabeza' ? d.L : ap === 'canto' ? d.h : d.a;
+  return { vw, vh, esp };
+}
+function figMuro(row, s) {
+  const d = ladDims(row.lad, s), g = brickGeom(d, row.ap), jh = n(s.jh), jv = n(s.jv);
+  const k = 2.1, X = 30, Y = 20, W = 100 * k, pw = (g.vw + jv) * k, ph = (g.vh + jh) * k;
+  let bricks = '', i = 0;
+  if (pw > 2 && ph > 2) for (let y = Y + W - ph; y > Y - ph; y -= ph, i++) { const off = i % 2 ? -pw / 2 : 0; for (let x = X + off; x < X + W; x += pw) bricks += `<rect x="${(x + jv * k / 2).toFixed(1)}" y="${(y + jh * k / 2).toFixed(1)}" width="${(g.vw * k).toFixed(1)}" height="${(g.vh * k).toFixed(1)}" class="bk"/>`; }
+  let b = `<clipPath id="mclip"><rect x="${X}" y="${Y}" width="${W}" height="${W}"/></clipPath>` + S.r(X, Y, W, W, 'mo') + `<g clip-path="url(#mclip)">${bricks}</g>` + S.r(X, Y, W, W, 'ln');
+  b += dH(X, X + W, Y + W + 18, '1.00 m', true) + dV(X + W + 14, Y, Y + W, '1.00 m');
+  const ex = 340, es = g.esp * k * 1.6;
+  b += S.r(ex, Y, es, W, 'mo');
+  for (let y = Y + W - ph * 1.0; y > Y - ph; y -= ph) b += S.r(ex, Math.max(y + jh * k / 2, Y), es, Math.min(g.vh * k, Y + W - y), 'bk');
+  b += S.r(ex, Y, es, W, 'ln') + dH(ex, ex + es, Y + W + 18, `e = ${f(g.esp, 0)} cm`, true) + S.t(ex + es + 12, Y + 30, 'corte', 'lb', 'start');
+  b += S.t(ex + es + 12, Y + 60, `${d.L}×${d.a}×${d.h} cm`, '', 'start') + S.t(ex + es + 12, Y + 80, `aparejo: ${row.ap}`, '', 'start');
+  return svg(b, Y + W + 45, 'Elevación de 1 m² de muro y corte');
+}
+
+function figTar() {
+  let b = S.r(150, 20, 120, 200, 'mo');
+  for (let y = 20; y < 220; y += 22) b += S.r(150, y + 1, 120, 20, 'bk');
+  b += S.r(270, 20, 16, 200, 'hi') + S.r(134, 20, 16, 200, 'hi') + dH(270, 286, 236, 'e', true) + S.t(210, 14, 'muro', 'lb') + S.t(300, 120, 'tarrajeo', 'lb', 'start');
+  return svg(b, 260, 'Corte de muro tarrajeado por ambas caras');
+}
+
+/* ---------- motor común para hojas de concreto ---------- */
+function concCompute(s, volFn, extra) {
+  const desp = n(s.desp) / 100;
+  const rows = s.rows.map(r => ({ vol: volFn(r) }));
+  const total = sum(rows, 'vol');
+  const byTipo = {}, mats = {};
+  s.rows.forEach((r, i) => { byTipo[r.tipo] = (byTipo[r.tipo] || 0) + rows[i].vol; addMats(mats, CONC[r.fc] || CONC['210'], rows[i].vol * (1 + desp)); });
+  const out = [
+    { l: 'Volumen total (neto)', v: total, u: 'm³', d: 3, main: true },
+    ...Object.entries(byTipo).map(([k, v]) => ({ l: k, v, u: 'm³', d: 3, sub: true })),
+    ...(extra ? extra(s, rows) : []),
+    { sec: `Materiales con ${f(n(s.desp), 0)}% de desperdicio` },
+    ...matsOut(mats, 'Arena gruesa')
+  ];
+  return { rows, tableTotal: total, tableD: 3, out };
+}
+const prism = r => n(r.nv) * n(r.L) * n(r.A) * n(r.H);
+const DESP_FIELD = { k: 'desp', label: 'Desperdicio de concreto', unit: '%', hint: 'Usual: 3% a 5%.' };
+const firstRow = (s, r) => { const i = s.rows.findIndex((_, k) => r.rows[k].vol > 0); return i < 0 ? null : { x: s.rows[i], v: r.rows[i], i }; };
+
+/* ---------- plantillas ---------- */
+const SHEETS = [
+{
+  id: 'exc', group: 'Movimiento de tierras', title: 'Excavaciones', short: 'Zanjas, zapatas, relleno y eliminación', unit: 'm³',
+  norma: ['Norma Técnica de Metrados · OE.2.1'],
+  intro: 'Volumen de terreno a excavar para cimientos corridos, zapatas y otros elementos enterrados. También calcula el relleno con material propio y el material excedente a eliminar.',
+  fields: [
+    { k: 'suelo', label: 'Tipo de suelo', type: 'select', options: [['gr', 'Arena o grava'], ['com', 'Tierra común'], ['arc', 'Arcilla'], ['roc', 'Roca fracturada']], presets: { gr: { esp: '12' }, com: { esp: '25' }, arc: { esp: '35' }, roc: { esp: '50' } }, hint: 'Al cambiarlo se propone un esponjamiento.' },
+    { k: 'esp', label: 'Esponjamiento', unit: '%', hint: 'Aumento de volumen del suelo suelto.' },
+    { k: 'sa', label: 'Sobreancho de trabajo por lado', unit: 'm', hint: 'Solo zapatas, platea y cisterna. Usa 0 si el plano no lo indica.' },
+    { k: 'ent', label: 'Volumen de cimentación enterrada', unit: 'm³', hint: 'Concreto bajo el nivel de terreno. Usa el botón “Traer” de la tabla.' }
+  ],
+  defaults: () => ({ suelo: 'com', esp: '25', sa: '0.00', ent: '23.913', rows: [
+    { tipo: 'Cimiento corrido (zanja)', desc: 'Ejes A y B', nv: '1', L: '18.00', A: '0.50', H: '0.80' },
+    { tipo: 'Zapata aislada', desc: 'Z-1', nv: '4', L: '1.20', A: '1.20', H: '1.50' },
+    { tipo: 'Zapata aislada', desc: 'Z-2', nv: '2', L: '1.50', A: '1.50', H: '1.50' },
+    { tipo: 'Zapata combinada', desc: 'ZC-1', nv: '1', L: '4.50', A: '1.60', H: '1.60' },
+    { tipo: 'Zanja para tuberías', desc: 'Desagüe', nv: '1', L: '12.00', A: '0.40', H: '0.60' }
+  ] }),
+  table: {
+    title: 'Metrado de excavación',
+    cols: [
+      { k: 'tipo', label: 'Excavación para', type: 'select', options: opts(['Cimiento corrido (zanja)', 'Zapata aislada', 'Zapata combinada', 'Zapata conectada', 'Viga de conexión / cimentación', 'Platea de cimentación', 'Cisterna / tanque enterrado', 'Zanja para tuberías', 'Otro']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo (m)', type: 'num' },
+      { k: 'A', label: 'Ancho (m)', type: 'num' },
+      { k: 'H', label: 'Profundidad (m)', type: 'num' }
+    ],
+    calcCols: [{ k: 'vol', label: 'Volumen (m³)', d: 3 }],
+    footer: 'Excavación total',
+    newRow: () => ({ tipo: 'Zapata aislada', desc: '', nv: '1', L: '', A: '', H: '' }),
+    note: 'La profundidad se mide desde el terreno natural hasta el fondo de la excavación (incluye solado si lo hay). En cimientos corridos el largo se mide por ejes, sin repetir los cruces.',
+    actions: '<button class="btn" type="button" data-act="ent">Traer volumen enterrado de Cimientos y Zapatas</button>'
+  },
+  ext: r => /^Zapata|Platea|Cisterna/.test(r.tipo),
+  compute(s) {
+    const sa = n(s.sa), esp = n(s.esp) / 100;
+    const rows = s.rows.map(r => { const e = this.ext(r) ? sa : 0; return { vol: n(r.nv) * (n(r.L) + 2 * e) * (n(r.A) + 2 * e) * n(r.H) }; });
+    const total = sum(rows, 'vol'), ent = Math.min(n(s.ent), total), rel = Math.max(total - ent, 0);
+    const byTipo = {}; s.rows.forEach((r, i) => byTipo[r.tipo] = (byTipo[r.tipo] || 0) + rows[i].vol);
+    return { rows, tableTotal: total, tableD: 3, total, ent, rel, esp, out: [
+      { l: 'Excavación (volumen en banco)', v: total, u: 'm³', d: 3, main: true },
+      ...Object.entries(byTipo).map(([k, v]) => ({ l: k, v, u: 'm³', d: 3, sub: true })),
+      { sec: 'Relleno y eliminación' },
+      { l: 'Relleno compactado con material propio', v: rel, u: 'm³', d: 3 },
+      { l: `Material excedente esponjado (+${f(n(s.esp), 0)}%)`, v: ent * (1 + esp), u: 'm³', d: 3, buy: `≈ ${Math.ceil(ent * (1 + esp) / 15 - 1e-9)} viajes de volquete de 15 m³` }
+    ] };
+  },
+  explain(s, r) {
+    const o = firstRow(s, r);
+    return `
+      <div class="formula">Excavación = N° × (L + 2s) × (A + 2s) × H<small>s = sobreancho de trabajo; en zanjas y cimientos corridos s = 0.</small></div>
+      ${o ? `<p>Fila ${o.i + 1} (${esc(o.x.tipo)} ${esc(o.x.desc)}): ${o.x.nv} × ${o.x.L} × ${o.x.A} × ${o.x.H}${this.ext(o.x) && n(s.sa) ? ` con s = ${s.sa}` : ''} = <b>${f(o.v.vol, 3)} m³</b>.</p>` : ''}
+      <p>Después de vaciar la cimentación, el espacio que sobra alrededor se rellena con el mismo material excavado. Lo que ocupa el concreto ya no cabe, y eso es lo que se elimina:</p>
+      <div class="formula">Relleno = Excavación − Cimentación enterrada<small>${f(r.total, 3)} − ${f(r.ent, 3)} = ${f(r.rel, 3)} m³</small></div>
+      <div class="formula">Eliminación = Cimentación enterrada × (1 + esponjamiento)<small>${f(r.ent, 3)} × ${f(1 + r.esp)} = ${f(r.ent * (1 + r.esp), 3)} m³</small></div>
+      <h4>Criterios</h4>
+      <ul>
+        <li>La excavación se mide en m³ de material en su estado natural (en banco), con las medidas del plano.</li>
+        <li>Separa excavación manual y con máquina, y por tipo de suelo, porque tienen APU distintos.</li>
+        <li>El relleno compactado y la eliminación son partidas aparte. Para un cálculo fino de relleno se usa también un factor de compactación.</li>
+      </ul>
+      <p class="warn">Los esponjamientos son valores aproximados de referencia. Usa el estudio de suelos del proyecto cuando lo tengas.</p>`;
+  },
+  fig: (s, row) => ({ svg: figExc(row?.tipo || ''), cap: row?.tipo || '' })
+},
+{
+  id: 'cim', group: 'Concreto simple', title: 'Cimientos y sobrecimientos', short: 'Solado, cimiento, sobrecimiento, falsa zapata', unit: 'm³',
+  norma: ['Norma Técnica de Metrados · OE.2.2'],
+  intro: 'Elementos de concreto simple o ciclópeo: solado, cimiento corrido, sobrecimiento, falsa zapata y calzadura. Cada fila tiene su propia mezcla.',
+  fields: [DESP_FIELD],
+  defaults: () => ({ desp: '5', rows: [
+    { tipo: 'Solado', desc: 'Bajo Z-1', fc: 'sol', nv: '4', L: '1.20', A: '1.20', H: '0.10' },
+    { tipo: 'Cimiento corrido', desc: 'Ejes A y B', fc: 'cim', nv: '1', L: '18.00', A: '0.50', H: '0.80' },
+    { tipo: 'Sobrecimiento', desc: 'Ejes A y B', fc: 'sob', nv: '1', L: '18.00', A: '0.15', H: '0.30' },
+    { tipo: 'Falsa zapata', desc: 'Bajo Z-2', fc: 'fz', nv: '2', L: '1.50', A: '1.50', H: '0.40' }
+  ] }),
+  table: {
+    title: 'Metrado de concreto simple',
+    cols: [
+      { k: 'tipo', label: 'Elemento', type: 'select', options: opts(['Solado', 'Cimiento corrido', 'Cimiento corrido armado', 'Sobrecimiento', 'Sobrecimiento armado', 'Falsa zapata', 'Calzadura', 'Otro']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'fc', label: 'Mezcla', type: 'select', options: FC_ALL },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo (m)', type: 'num' },
+      { k: 'A', label: 'Ancho (m)', type: 'num' },
+      { k: 'H', label: 'Alto / espesor (m)', type: 'num' }
+    ],
+    calcCols: [{ k: 'vol', label: 'Volumen (m³)', d: 3 }],
+    footer: 'Volumen total',
+    newRow: () => ({ tipo: 'Cimiento corrido', desc: '', fc: 'cim', nv: '1', L: '', A: '', H: '' }),
+    note: 'Solado: espesor usual 0.10 m y mezcla 1:12; también se metra en m². Los cimientos y sobrecimientos armados llevan concreto f\'c y además acero y encofrado.'
+  },
+  compute(s) {
+    return concCompute(s, prism, (s2, rows) => {
+      const a = s2.rows.reduce((acc, r) => acc + (r.tipo === 'Solado' ? n(r.nv) * n(r.L) * n(r.A) : 0), 0);
+      return a > 0 ? [{ l: 'Solado (área)', v: a, u: 'm²', sub: true }] : [];
+    });
+  },
+  explain(s, r) {
+    const o = firstRow(s, r);
+    return `
+      <div class="formula">V = N° × Largo × Ancho × Alto</div>
+      ${o ? `<p>Fila ${o.i + 1} (${esc(o.x.tipo)} ${esc(o.x.desc)}): ${o.x.nv} × ${o.x.L} × ${o.x.A} × ${o.x.H} = <b>${f(o.v.vol, 3)} m³</b>.</p>` : ''}
+      <h4>Criterios para no contar dos veces</h4>
+      <ul>
+        <li><b>Cimiento corrido:</b> se mide por ejes. En los cruces (esquinas y “T”) el volumen se cuenta una sola vez: descuenta el traslape en una de las dos direcciones.</li>
+        <li><b>Sobrecimiento:</b> va desde la cara superior del cimiento hasta el nivel indicado (normalmente sobre el piso terminado). No se cuenta donde hay columnas.</li>
+        <li><b>Solado:</b> capa de nivelación bajo zapatas; mide el área de la zapata.</li>
+        <li><b>Falsa zapata:</b> relleno de concreto ciclópeo bajo la zapata hasta llegar al suelo resistente.</li>
+        <li><b>Concreto ciclópeo:</b> PG = piedra grande, PM = piedra mediana. El porcentaje indica la parte del volumen que ocupa la piedra.</li>
+      </ul>
+      <p>Mezclas que estás usando, por m³:</p>
+      ${concRef([...new Set(s.rows.map(q => q.fc))])}
+      ${DOS_NOTE}`;
+  },
+  fig: (s, row) => ({ svg: figCim(row?.tipo || ''), cap: row?.tipo || '' })
+},
+{
+  id: 'zap', group: 'Concreto armado', title: 'Zapatas', short: 'Aislada, combinada, conectada, con talud…', unit: 'm³',
+  norma: ['Norma Técnica de Metrados', 'RNE E.060'],
+  intro: 'Todos los tipos de zapata con su forma real: prismas, trapecios, troncos de pirámide y escalonadas. Las columnas B₂, b₂ y h₂ solo se llenan en los tipos que las usan.',
+  fields: [DESP_FIELD],
+  defaults: () => ({ desp: '5', rows: [
+    { tipo: 'Aislada céntrica', desc: 'Z-1', fc: '210', nv: '4', L: '1.20', A: '1.20', H: '0.50', x1: '', x2: '', x3: '' },
+    { tipo: 'Aislada céntrica', desc: 'Z-2', fc: '210', nv: '2', L: '1.50', A: '1.50', H: '0.50', x1: '', x2: '', x3: '' },
+    { tipo: 'Aislada excéntrica (medianera)', desc: 'Z-3', fc: '210', nv: '2', L: '1.80', A: '1.00', H: '0.60', x1: '', x2: '', x3: '' },
+    { tipo: 'Combinada trapezoidal', desc: 'ZC-1', fc: '210', nv: '1', L: '4.50', A: '1.80', H: '0.60', x1: '1.30', x2: '', x3: '' },
+    { tipo: 'Con talud (tronco de pirámide)', desc: 'Z-4', fc: '210', nv: '1', L: '2.00', A: '2.00', H: '0.30', x1: '0.45', x2: '0.45', x3: '0.30' },
+    { tipo: 'Viga de conexión', desc: 'VC-1 (30×60)', fc: '210', nv: '2', L: '3.20', A: '0.30', H: '0.60', x1: '', x2: '', x3: '' }
+  ] }),
+  table: {
+    title: 'Metrado de zapatas',
+    cols: [
+      { k: 'tipo', label: 'Tipo de zapata', type: 'select', options: opts(['Aislada céntrica', 'Aislada excéntrica (medianera)', 'Aislada esquinera', 'Combinada rectangular', 'Combinada trapezoidal', 'Conectada (zapata)', 'Viga de conexión', 'Con talud (tronco de pirámide)', 'Escalonada (2 niveles)', 'Pedestal', 'Platea de cimentación']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'fc', label: 'Concreto', type: 'select', options: FC_ARM },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'L (m)', type: 'num' },
+      { k: 'A', label: 'B (m)', type: 'num' },
+      { k: 'H', label: 'h (m)', type: 'num' },
+      { k: 'x1', label: 'B₂ / a₂ (m)', type: 'num', when: r => /trapezoidal|talud|Escalonada/.test(r.tipo) },
+      { k: 'x2', label: 'b₂ (m)', type: 'num', when: r => /talud|Escalonada/.test(r.tipo) },
+      { k: 'x3', label: 'h₂ (m)', type: 'num', when: r => /talud|Escalonada/.test(r.tipo) }
+    ],
+    calcCols: [{ k: 'vol', label: 'Volumen (m³)', d: 3 }],
+    footer: 'Volumen total',
+    newRow: () => ({ tipo: 'Aislada céntrica', desc: '', fc: '210', nv: '1', L: '', A: '', H: '', x1: '', x2: '', x3: '' }),
+    note: 'Viga de conexión: L = largo entre caras de zapatas, B = ancho, h = peralte. Pedestal: L × B es su sección y h su altura. Toca una fila para ver su esquema.'
+  },
+  vol(r) {
+    const N = n(r.nv), L = n(r.L), B = n(r.A), h = n(r.H), x1 = n(r.x1), x2 = n(r.x2), x3 = n(r.x3);
+    if (/trapezoidal/.test(r.tipo)) return N * (B + x1) / 2 * L * h;
+    if (/talud/.test(r.tipo)) { const A1 = L * B, A2 = x1 * x2; return N * (A1 * h + x3 / 3 * (A1 + A2 + Math.sqrt(A1 * A2))); }
+    if (/Escalonada/.test(r.tipo)) return N * (L * B * h + x1 * x2 * x3);
+    return N * L * B * h;
+  },
+  formula(r) {
+    if (/trapezoidal/.test(r.tipo)) return ['V = N° × (B + B₂)/2 × L × h', `${r.nv} × (${r.A} + ${r.x1})/2 × ${r.L} × ${r.H}`];
+    if (/talud/.test(r.tipo)) return ['V = N° × [L·B·h + h₂/3 × (A₁ + A₂ + √(A₁·A₂))]', `A₁ = ${r.L} × ${r.A}, A₂ = ${r.x1} × ${r.x2}, h₂ = ${r.x3}`];
+    if (/Escalonada/.test(r.tipo)) return ['V = N° × (L·B·h + a₂·b₂·h₂)', `${r.nv} × (${r.L}·${r.A}·${r.H} + ${r.x1}·${r.x2}·${r.x3})`];
+    return ['V = N° × L × B × h', `${r.nv} × ${r.L} × ${r.A} × ${r.H}`];
+  },
+  compute(s) { return concCompute(s, r => this.vol(r)); },
+  explain(s, r) {
+    const seen = new Set(), ex = [];
+    s.rows.forEach((x, i) => { const fm = this.formula(x)[0]; if (!seen.has(fm) && r.rows[i].vol > 0) { seen.add(fm); ex.push({ x, i, fm: this.formula(x) }); } });
+    return `
+      <p>Cada forma de zapata tiene su fórmula de volumen. Estas son las que usa tu tabla:</p>
+      ${ex.map(o => `<div class="formula">${o.fm[0]}<small>Fila ${o.i + 1} (${esc(o.x.desc)}): ${o.fm[1]} = ${f(r.rows[o.i].vol, 3)} m³</small></div>`).join('')}
+      <h4>Tipos de zapata</h4>
+      <ul>
+        <li><b>Aislada:</b> una columna. Céntrica si la columna está al centro; excéntrica o medianera si está pegada al lindero; esquinera si está en la esquina del terreno. El volumen es igual, cambia el diseño.</li>
+        <li><b>Combinada:</b> una sola zapata bajo dos o más columnas. Rectangular, o trapezoidal cuando las cargas son distintas.</li>
+        <li><b>Conectada:</b> una zapata excéntrica unida a una interior con una <b>viga de conexión</b>. Zapatas y viga son filas distintas; la viga se mide entre caras de zapatas.</li>
+        <li><b>Con talud:</b> prisma de base más un tronco de pirámide encima. A₂ es el área superior (sección de la columna más unos centímetros).</li>
+        <li><b>Escalonada:</b> dos prismas superpuestos. <b>Pedestal:</b> prolongación ancha de la columna sobre la zapata.</li>
+        <li><b>Platea:</b> losa de cimentación bajo toda la edificación.</li>
+      </ul>
+      <p>Columnas: la altura de la columna empieza en la cara superior de la zapata; no metres esa parte dos veces.</p>
+      ${concRef([...new Set(s.rows.map(q => q.fc))])}
+      ${DOS_NOTE}`;
+  },
+  fig: (s, row) => ({ svg: figZap(row?.tipo || ''), cap: row?.tipo || '' })
+},
+{
+  id: 'concreto', group: 'Concreto armado', title: 'Columnas, vigas y losas', short: 'Elementos sobre la cimentación', unit: 'm³',
+  norma: ['Norma Técnica de Metrados', 'RNE E.060'],
+  intro: 'Concreto de columnas, vigas, losas macizas, placas y otros elementos de concreto armado. La losa aligerada tiene su propia hoja.',
+  fields: [DESP_FIELD],
+  defaults: () => ({ desp: '5', rows: [
+    { tipo: 'Columna', desc: 'C-1 (25×25)', fc: '210', nv: '4', L: '0.25', A: '0.25', H: '2.80' },
+    { tipo: 'Columna de confinamiento', desc: 'CC-1 (25×13)', fc: '175', nv: '6', L: '0.25', A: '0.13', H: '2.60' },
+    { tipo: 'Viga', desc: 'V-101 (25×40)', fc: '210', nv: '2', L: '3.75', A: '0.25', H: '0.40' },
+    { tipo: 'Viga chata', desc: 'VCH (25×20)', fc: '210', nv: '1', L: '3.50', A: '0.25', H: '0.20' },
+    { tipo: 'Losa maciza', desc: 'Baño', fc: '210', nv: '1', L: '2.50', A: '2.00', H: '0.15' }
+  ] }),
+  table: {
+    title: 'Metrado de concreto armado',
+    cols: [
+      { k: 'tipo', label: 'Elemento', type: 'select', options: opts(['Columna', 'Columna de confinamiento', 'Viga', 'Viga chata', 'Viga solera / de amarre', 'Losa maciza', 'Placa (muro de concreto)', 'Escalera', 'Cisterna / tanque', 'Otro']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'fc', label: 'Concreto', type: 'select', options: FC_ARM },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo (m)', type: 'num' },
+      { k: 'A', label: 'Ancho (m)', type: 'num' },
+      { k: 'H', label: 'Alto (m)', type: 'num' }
+    ],
+    calcCols: [{ k: 'vol', label: 'Volumen (m³)', d: 3 }],
+    footer: 'Volumen total',
+    newRow: () => ({ tipo: 'Columna', desc: '', fc: '210', nv: '1', L: '', A: '', H: '' }),
+    note: 'En columnas, Largo y Ancho son la sección y Alto la altura. Escalera: una fila para la garganta (largo inclinado × ancho × espesor) y otra para los pasos (N° pasos × paso × contrapaso ÷ 2 × ancho).'
+  },
+  compute(s) { return concCompute(s, prism); },
+  explain(s, r) {
+    const o = firstRow(s, r);
+    return `
+      <div class="formula">V = N° × Largo × Ancho × Alto</div>
+      ${o ? `<p>Fila ${o.i + 1} (${esc(o.x.tipo)} ${esc(o.x.desc)}): ${o.x.nv} × ${o.x.L} × ${o.x.A} × ${o.x.H} = <b>${f(o.v.vol, 3)} m³</b>.</p>` : ''}
+      <h4>Criterios para no contar dos veces</h4>
+      <ul>
+        <li><b>Columnas:</b> la altura va desde la cara superior de la zapata o cimiento hasta la cara superior del techo. El cruce con las vigas se cuenta en la columna.</li>
+        <li><b>Columnas de confinamiento:</b> se mide su sección completa; si tienen endentado con el muro, se suma esa parte.</li>
+        <li><b>Vigas:</b> el largo se mide entre caras de columnas. Si la losa se mide entre caras de vigas, la viga lleva su peralte completo.</li>
+        <li><b>Losas macizas:</b> área entre caras de vigas por el espesor.</li>
+      </ul>
+      ${concRef([...new Set(s.rows.map(q => q.fc))])}
+      ${DOS_NOTE}`;
+  },
+  fig: (s, row) => ({ svg: figElev(row?.tipo || ''), cap: row?.tipo || '' })
+},
+{
+  id: 'encofrado', group: 'Concreto armado', title: 'Encofrado y desencofrado', short: 'Área de contacto por tipo', unit: 'm²',
+  norma: ['Norma Técnica de Metrados'],
+  intro: 'El encofrado se mide por el área de concreto que toca el molde. En Perú encofrado y desencofrado van en una sola partida, con la misma área.',
+  fields: [{ k: 'eLosa', label: 'Espesor de losa', unit: 'm', hint: 'Se descuenta de los costados de las vigas.' }],
+  defaults: () => ({ eLosa: '0.20', rows: [
+    { tipo: 'Zapata (costados)', desc: 'Z-1', nv: '4', L: '0.50', m1: '1.20', m2: '1.20' },
+    { tipo: 'Columna aislada', desc: 'C-1 (25×25)', nv: '4', L: '2.80', m1: '0.25', m2: '0.25' },
+    { tipo: 'Columna confinada (muro a 2 lados)', desc: 'CC-1', nv: '6', L: '2.60', m1: '0.25', m2: '' },
+    { tipo: 'Viga interior', desc: 'V-101 (25×40)', nv: '2', L: '3.75', m1: '0.25', m2: '0.40' },
+    { tipo: 'Viga perimetral', desc: 'V-102 (25×40)', nv: '2', L: '3.50', m1: '0.25', m2: '0.40' },
+    { tipo: 'Sobrecimiento (2 caras)', desc: 'Ejes A y B', nv: '1', L: '18.00', m1: '0.30', m2: '' },
+    { tipo: 'Losa aligerada (fondo)', desc: 'Paño 1', nv: '1', L: '4.00', m1: '3.75', m2: '' }
+  ] }),
+  table: {
+    title: 'Metrado de encofrado',
+    cols: [
+      { k: 'tipo', label: 'Elemento', type: 'select', options: opts(['Zapata (costados)', 'Viga de conexión (costados)', 'Sobrecimiento (2 caras)', 'Sobrecimiento (1 cara)', 'Columna aislada', 'Columna confinada (muro a 2 lados)', 'Columna de esquina (muro en 2 caras)', 'Columna extremo (muro en 1 cara)', 'Viga interior', 'Viga perimetral', 'Viga chata (solo fondo)', 'Losa aligerada (fondo)', 'Losa maciza (fondo)', 'Placa (2 caras)', 'Otro (desarrollo directo)']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo / altura (m)', type: 'num' },
+      { k: 'm1', label: 'Medida 1 (m)', type: 'num' },
+      { k: 'm2', label: 'Medida 2 (m)', type: 'num', when: r => /Zapata|Columna aislada|esquina|extremo|Viga interior|Viga perimetral|conexión/.test(r.tipo) }
+    ],
+    calcCols: [{ k: 'dev', label: 'Desarrollo (m)', d: 2 }, { k: 'area', label: 'Área (m²)', d: 2 }],
+    footer: 'Área total',
+    newRow: () => ({ tipo: 'Columna aislada', desc: '', nv: '1', L: '', m1: '', m2: '' }),
+    note: 'Toca una fila: el esquema muestra en naranja las caras que se encofran y qué es cada medida.'
+  },
+  dev(r, e) {
+    const a = n(r.m1), b = n(r.m2), t = r.tipo;
+    if (/Zapata|Columna aislada/.test(t)) return [2 * (a + b), '2(a + b)', 'Largo = peralte o altura, medida 1 = a, medida 2 = b'];
+    if (/conexión/.test(t)) return [2 * b, '2h', 'Largo entre zapatas, medida 1 = b, medida 2 = h'];
+    if (/Sobrecimiento \(2/.test(t)) return [2 * a, '2h', 'Medida 1 = altura h'];
+    if (/Sobrecimiento \(1/.test(t)) return [a, 'h', 'Medida 1 = altura h (la otra cara va contra el terreno)'];
+    if (/confinada/.test(t)) return [2 * a, '2a', 'Medida 1 = a, lado de la columna en la dirección del muro'];
+    if (/esquina/.test(t)) return [a + b, 'a + b', 'Medida 1 = a, medida 2 = b'];
+    if (/extremo/.test(t)) return [2 * a + b, '2a + b', 'Medida 1 = a (dirección del muro), medida 2 = b'];
+    if (/Viga interior/.test(t)) return [a + 2 * Math.max(b - e, 0), 'b + 2(h − e)', 'Medida 1 = ancho b, medida 2 = peralte h'];
+    if (/Viga perimetral/.test(t)) return [a + b + Math.max(b - e, 0), 'b + h + (h − e)', 'Medida 1 = ancho b, medida 2 = peralte h'];
+    if (/chata/.test(t)) return [a, 'b', 'Medida 1 = ancho b'];
+    if (/Losa/.test(t)) return [a, 'ancho', 'Largo × medida 1 (ancho del paño)'];
+    if (/Placa/.test(t)) return [2 * a, '2 × largo', 'Largo = altura, medida 1 = largo de la placa'];
+    return [a, 'desarrollo', 'Medida 1 = desarrollo'];
+  },
+  compute(s) {
+    const e = n(s.eLosa);
+    const rows = s.rows.map(r => { const dev = this.dev(r, e)[0]; return { dev, area: n(r.nv) * n(r.L) * dev }; });
+    const total = sum(rows, 'area');
+    const byTipo = {};
+    s.rows.forEach((r, i) => byTipo[r.tipo] = (byTipo[r.tipo] || 0) + rows[i].area);
+    return { rows, tableTotal: total, tableD: 2, out: [
+      { l: 'Encofrado y desencofrado', v: total, u: 'm²', main: true },
+      ...Object.entries(byTipo).map(([k, v]) => ({ l: k, v, u: 'm²', sub: true }))
+    ] };
+  },
+  explain(s, r) {
+    const e = n(s.eLosa);
+    const ex = s.rows.map((x, i) => ({ x, i, d: this.dev(x, e) })).filter(o => r.rows[o.i].area > 0).slice(0, 3);
+    return `
+      <div class="formula">Área = N° × Largo × Desarrollo<small>El desarrollo es la suma de los anchos de las caras encofradas.</small></div>
+      ${ex.map(o => `<p>Fila ${o.i + 1} (${esc(o.x.tipo)}): desarrollo = ${o.d[1]} = ${f(o.d[0])} m; área = ${o.x.nv} × ${o.x.L} × ${f(o.d[0])} = <b>${f(r.rows[o.i].area)} m²</b>.</p>`).join('')}
+      <h4>Qué caras se encofran</h4>
+      <ul>
+        <li><b>Columna aislada y zapata:</b> las 4 caras.</li>
+        <li><b>Columnas de confinamiento:</b> no se encofran las caras que tocan el muro de ladrillo, porque el muro hace de molde.</li>
+        <li><b>Vigas:</b> fondo y costados, descontando el espesor de losa en el lado donde llega la losa. La viga chata solo lleva fondo.</li>
+        <li><b>Sobrecimiento:</b> dos caras; una sola si la otra va contra el terreno o un muro existente. El cimiento corrido no se encofra.</li>
+        <li><b>Losas:</b> el fondo, por m² de área entre caras de vigas.</li>
+      </ul>`;
+  },
+  fig(s, row) { const d = row ? this.dev(row, n(s.eLosa)) : ['', '', '']; return { svg: figEnc(row?.tipo || ''), cap: row?.tipo || '', formula: row ? `Desarrollo = ${d[1]}<small>${d[2]}</small>` : '' }; }
+},
+{
+  id: 'acero', group: 'Concreto armado', title: 'Acero de refuerzo', short: 'Kilos por elemento y diámetro', unit: 'kg',
+  norma: ['NTP 341.031', 'ASTM A615 Gr. 60', 'RNE E.060'],
+  intro: 'Planilla de acero: anota las barras de cada elemento con su longitud de corte. La hoja suma kilos por elemento y por diámetro y cuántas varillas comprar.',
+  fields: [
+    { k: 'desp', label: 'Desperdicio para el pedido', unit: '%', hint: 'Por cortes y empalmes. Usual: 3% a 5%.' },
+    { k: 'Lc', label: 'Largo de varilla comercial', unit: 'm', hint: 'En Perú se venden de 9 m.' },
+    { k: 'incE', label: 'Sumar la hoja Estribos', type: 'select', options: [['si', 'Sí'], ['no', 'No']], hint: 'Si eliges Sí, no anotes estribos aquí para no contarlos dos veces.' },
+    { k: 'hB', label: 'Ayuda · ancho a cubrir', unit: 'm', hint: 'Para contar barras en zapatas y losas.' },
+    { k: 'hr', label: 'Ayuda · recubrimiento', unit: 'm', hint: 'Zapatas: 0.075 m (contra el terreno).' },
+    { k: 'hs', label: 'Ayuda · espaciamiento', unit: 'm' }
+  ],
+  defaults: () => ({ desp: '3', Lc: '9', incE: 'si', hB: '1.20', hr: '0.075', hs: '0.15', rows: [
+    { el: 'Zapata', desc: 'Z-1 · parrilla', d: 'd12i', nv: '4', nb: '16', L: '1.35' },
+    { el: 'Columna', desc: 'C-1 · longitudinal', d: 'd12i', nv: '4', nb: '4', L: '3.60' },
+    { el: 'Viga', desc: 'V-101 · longitudinal', d: 'd58', nv: '2', nb: '4', L: '4.30' },
+    { el: 'Losa aligerada', desc: 'Viguetas · positivo', d: 'd12i', nv: '1', nb: '19', L: '4.20' },
+    { el: 'Losa aligerada', desc: 'Temperatura @ 0.25', d: 'd6', nv: '1', nb: '17', L: '7.80' }
+  ] }),
+  table: {
+    title: 'Planilla de acero',
+    cols: [
+      { k: 'el', label: 'Elemento', type: 'select', options: opts(['Zapata', 'Viga de conexión', 'Cimiento / sobrecimiento armado', 'Columna', 'Columna de confinamiento', 'Viga', 'Losa aligerada', 'Losa maciza', 'Placa', 'Escalera', 'Otro']) },
+      { k: 'desc', label: 'Barra', type: 'text' },
+      { k: 'd', label: 'Diámetro', type: 'select', options: ACERO.map(([k, l]) => [k, l]) },
+      { k: 'nv', label: 'N° elementos', type: 'num' },
+      { k: 'nb', label: 'Barras por elem.', type: 'num' },
+      { k: 'L', label: 'Long. de corte (m)', type: 'num' }
+    ],
+    calcCols: [{ k: 'lt', label: 'Long. total (m)', d: 2 }, { k: 'kg', label: 'Peso (kg)', d: 2 }],
+    footer: 'Peso total',
+    newRow: () => ({ el: 'Columna', desc: '', d: 'd12i', nv: '1', nb: '', L: '' }),
+    note: 'La longitud de corte incluye ganchos, dobleces y traslapes. Los estribos tienen su propia hoja (Estribos), que se suma aquí si en Datos eliges “Sumar la hoja Estribos”.'
+  },
+  compute(s) {
+    const rows = s.rows.map(r => { const lt = n(r.nv) * n(r.nb) * n(r.L); return { lt, kg: lt * (ACERO_MAP[r.d]?.p || 0) }; });
+    const total = sum(rows, 'kg');
+    const desp = n(s.desp) / 100, Lc = n(s.Lc) || 9;
+    const byD = {}, byE = {};
+    s.rows.forEach((r, i) => { const o = byD[r.d] || (byD[r.d] = { m: 0, kg: 0 }); o.m += rows[i].lt; o.kg += rows[i].kg; byE[r.el] = (byE[r.el] || 0) + rows[i].kg; });
+    let est = 0;
+    if (s.incE === 'si') {
+      const es = st('estribos'), er = SHEET.estribos.compute(es);
+      es.rows.forEach((r, i) => { const x = er.rows[i], o = byD[r.d] || (byD[r.d] = { m: 0, kg: 0 }); o.m += x.lt; o.kg += x.kg; byE[r.el] = (byE[r.el] || 0) + x.kg; });
+      est = er.tableTotal;
+    }
+    const ds = ACERO.filter(([k]) => byD[k] && byD[k].m > 0);
+    const hB = n(s.hB), hr = n(s.hr), hs = n(s.hs), nbar = hs > 0 ? Math.floor((hB - 2 * hr) / hs + 1e-9) + 1 : 0;
+    return { rows, tableTotal: total, tableD: 2, byD, nbar, out: [
+      { l: 'Acero total (neto)', v: total + est, u: 'kg', main: true, buy: est ? `Planilla ${f(total)} kg + estribos ${f(est)} kg` : '' },
+      { l: `Con ${f(n(s.desp), 0)}% de desperdicio`, v: (total + est) * (1 + desp), u: 'kg' },
+      { sec: 'Por elemento (neto)' },
+      ...Object.entries(byE).map(([k, v]) => ({ l: k, v, u: 'kg', sub: true })),
+      { sec: 'Por diámetro (neto)' },
+      ...ds.map(([k, l]) => ({ l: `Ø ${l}`, v: byD[k].kg, u: 'kg', buy: `${f(byD[k].m)} m · comprar ${Math.ceil(byD[k].m * (1 + desp) / Lc - 1e-9)} varillas de ${f(Lc, 0)} m` })),
+      { sec: 'Ayuda para contar barras' },
+      { l: `Barras @ ${f(hs)} m en ${f(hB)} m`, v: nbar, u: 'und', d: 0 }
+    ] };
+  },
+  explain(s, r) {
+    const x = s.rows[0], v = r.rows[0], used = Object.keys(r.byD);
+    return `
+      <div class="formula">Peso = N° elementos × barras × long. de corte × peso (kg/m)</div>
+      ${x ? `<p>Fila 1 (${esc(x.desc)}): ${x.nv} × ${x.nb} × ${x.L} m = ${f(v.lt)} m; × ${f(ACERO_MAP[x.d]?.p || 0, 3)} kg/m = <b>${f(v.kg)} kg</b>.</p>` : ''}
+      <p>Para contar barras repartidas (parrilla de zapata, acero de temperatura):</p>
+      <div class="formula">N° de barras = (ancho − 2·recubrimiento) ÷ espaciamiento + 1<small>(${s.hB} − 2 × ${s.hr}) ÷ ${s.hs} + 1 = ${r.nbar} barras (se redondea hacia abajo y se suma 1)</small></div>
+      <h4>Cómo armar la planilla por elemento</h4>
+      <ul>
+        <li><b>Zapata:</b> parrilla en dos direcciones. Longitud = lado − 2r + ganchos.</li>
+        <li><b>Columna:</b> barras longitudinales desde la zapata (con gancho de anclaje) hasta el techo, más traslapes; estribos según el plano (zona de confinamiento y zona central).</li>
+        <li><b>Viga:</b> acero corrido superior e inferior, bastones y estribos.</li>
+        <li><b>Losa aligerada:</b> acero positivo y negativo por vigueta, y acero de temperatura (6 mm o ¼") en la losa superior.</li>
+      </ul>
+      <p>Peso nominal: <b>≈ 0.00617 × d²</b> (d en mm, kg/m).</p>
+      ${refTable(['Diámetro', 'Peso (kg/m)', 'Varilla de 9 m (kg)'], ACERO.map(([k, l, p]) => ({ key: used.includes(k) ? 'x' : null, cells: [l, f(p, 3), f(p * 9)] })), 'x')}`;
+  },
+  fig: () => ({ svg: figAcero(), cap: 'Recubrimiento, estribos y espaciamiento', formula: 'N° barras = (B − 2r) / s + 1' })
+},
+{
+  id: 'estribos', group: 'Concreto armado', title: 'Estribos', short: 'Todas las variantes y su distribución', unit: 'kg',
+  norma: ['RNE E.060 · cap. 7 y 21', 'NTP 341.031'],
+  intro: 'Cuenta los estribos con la distribución del plano y calcula su longitud de dos formas: con el perímetro del elemento (forma rápida que usan muchos) o con el perímetro interior más los ganchos (forma exacta).',
+  fields: [
+    { k: 'met', label: 'Longitud de cada estribo', type: 'select', options: [['perim', 'Perímetro del elemento'], ['exact', 'Perímetro interior + ganchos']], hint: 'Cambia aquí y compara los kilos.' },
+    { k: 'rc', label: 'Recubrimiento', unit: 'm', hint: 'Vigas y columnas: 0.04 m. Solo se usa en la forma exacta.' },
+    { k: 'gk', label: 'Gancho de 135° (cada uno)', unit: 'm', hint: 'E.060: 6 veces el diámetro, mínimo 7.5 cm. Solo en la forma exacta.' },
+    { k: 'desp', label: 'Desperdicio para el pedido', unit: '%' },
+    { k: 'Lc', label: 'Largo de varilla comercial', unit: 'm' }
+  ],
+  defaults: () => ({ met: 'perim', rc: '0.04', gk: '0.075', desp: '3', Lc: '9', rows: [
+    { el: 'Columna', desc: 'C-1 (25×25)', tipo: 'rect', d: 'd38', nv: '4', a: '0.25', b: '0.25', Ln: '2.40', dist: '1@0.05, 5@0.10, r@0.25' },
+    { el: 'Columna', desc: 'C-2 (30×50)', tipo: 'grapa1', d: 'd38', nv: '2', a: '0.50', b: '0.30', Ln: '2.40', dist: '1@0.05, 5@0.10, r@0.25' },
+    { el: 'Columna', desc: 'CR-1 (Ø 40)', tipo: 'circ', d: 'd38', nv: '1', a: '0.40', b: '', Ln: '2.40', dist: '1@0.05, 5@0.10, r@0.20' },
+    { el: 'Columna de confinamiento', desc: 'CC-1 (25×13)', tipo: 'rect', d: 'd6', nv: '6', a: '0.25', b: '0.13', Ln: '2.20', dist: '1@0.05, 4@0.10, r@0.25' },
+    { el: 'Viga', desc: 'V-101 (25×40)', tipo: 'rect', d: 'd38', nv: '2', a: '0.25', b: '0.40', Ln: '3.75', dist: '1@0.05, 8@0.10, r@0.25' },
+    { el: 'Viga de conexión', desc: 'VC-1 (30×60)', tipo: 'rect', d: 'd38', nv: '2', a: '0.30', b: '0.60', Ln: '3.20', dist: '1@0.05, r@0.20' }
+  ] }),
+  table: {
+    title: 'Metrado de estribos',
+    cols: [
+      { k: 'el', label: 'Elemento', type: 'select', options: opts(['Columna', 'Columna de confinamiento', 'Viga', 'Viga de conexión', 'Viga solera / de amarre', 'Placa (núcleo)', 'Otro']) },
+      { k: 'desc', label: 'Descripción', type: 'text' },
+      { k: 'tipo', label: 'Tipo de estribo', type: 'select', options: ESTRIBOS },
+      { k: 'd', label: 'Ø estribo', type: 'select', options: ACERO.map(([k, l]) => [k, l]) },
+      { k: 'nv', label: 'N° elementos', type: 'num' },
+      { k: 'a', label: 'a o D (m)', type: 'num' },
+      { k: 'b', label: 'b (m)', type: 'num', when: r => !/circ|esp/.test(r.tipo) },
+      { k: 'Ln', label: 'Luz / altura libre (m)', type: 'num' },
+      { k: 'dist', label: 'Distribución o N° (paso en espiral)', type: 'text' }
+    ],
+    calcCols: [{ k: 'ne', label: 'Estribos por elem.', d: 0 }, { k: 'le', label: 'Long. c/u (m)', d: 2 }, { k: 'lt', label: 'Long. total (m)', d: 2 }, { k: 'kg', label: 'Peso (kg)', d: 2 }],
+    footer: 'Peso total',
+    newRow: () => ({ el: 'Columna', desc: '', tipo: 'rect', d: 'd38', nv: '1', a: '', b: '', Ln: '', dist: '1@0.05, 5@0.10, r@0.25' }),
+    note: 'Distribución como en el plano: “1@0.05, 8@0.10, r@0.25” significa, en cada extremo, 1 estribo a 5 cm, 8 a 10 cm y el resto a 25 cm. También puedes escribir solo el número total de estribos. En espiral escribe el paso (ej. 0.05). Columna circular: a = diámetro.'
+  },
+  len(r, s) {
+    const ex = s.met === 'exact', rc = n(s.rc), g = ex ? 2 * n(s.gk) : 0;
+    const a = n(r.a), b = n(r.b), A = ex ? Math.max(a - 2 * rc, 0) : a, B = ex ? Math.max(b - 2 * rc, 0) : b;
+    const D = ex ? Math.max(a - 2 * rc, 0) : a, G = ex ? ' + 2 ganchos' : '';
+    const rect = 2 * (A + B) + g, A_ = ex ? 'a′' : 'a', B_ = ex ? 'b′' : 'b';
+    switch (r.tipo) {
+      case 'grapa1': return [rect + A + g, `2(${A_} + ${B_})${G} + grapa (${A_}${G})`];
+      case 'grapa2': return [rect + 2 * (A + g), `2(${A_} + ${B_})${G} + 2 grapas`];
+      case 'doble': return [2 * (2 * (2 * A / 3 + B) + g), `2 × [2(⅔${A_} + ${B_})${G}]`];
+      case 'rombo': return [rect + 4 * Math.hypot(A / 2, B / 2) + g, `2(${A_} + ${B_}) + 4√((${A_}/2)² + (${B_}/2)²)${ex ? ' + 4 ganchos' : ''}`];
+      case 'circ': return [Math.PI * D + g, `π × ${ex ? 'D′' : 'D'}${G}`];
+      case 'esp': { const p = n(r.dist) || 0.05; return [Math.hypot(Math.PI * D, p), `√((π${ex ? 'D′' : 'D'})² + paso²) por vuelta`]; }
+      case 'u': return [A + 2 * B + g, `${A_} + 2${B_}${G}`];
+      case 'grapa': return [A + g, `${A_}${G}`];
+      default: return [rect, `2(${A_} + ${B_})${G}`];
+    }
+  },
+  count(r) {
+    if (r.tipo === 'esp') { const p = n(r.dist), Ln = n(r.Ln); return p > 0 ? { ok: true, count: Ln / p + 3, esp: true, pos: [] } : { ok: false, count: 0, pos: [], msg: 'En espiral escribe el paso, por ejemplo 0.05.' }; }
+    return parseDist(r.dist, n(r.Ln));
+  },
+  compute(s) {
+    const rows = s.rows.map(r => {
+      const c = this.count(r), le = this.len(r, s)[0], ne = c.count;
+      const lt = n(r.nv) * ne * le; return { ne, le, lt, kg: lt * (ACERO_MAP[r.d]?.p || 0), c };
+    });
+    const total = sum(rows, 'kg'), desp = n(s.desp) / 100, Lc = n(s.Lc) || 9;
+    const byE = {}, byD = {};
+    s.rows.forEach((r, i) => { byE[r.el] = (byE[r.el] || 0) + rows[i].kg; const o = byD[r.d] || (byD[r.d] = { m: 0, kg: 0 }); o.m += rows[i].lt; o.kg += rows[i].kg; });
+    const nE = s.rows.reduce((a, r, i) => a + n(r.nv) * (r.tipo === 'esp' ? 0 : rows[i].ne), 0);
+    const bad = rows.map((x, i) => (!x.c.ok || x.c.over) ? i + 1 : 0).filter(Boolean);
+    return { rows, byD, tableTotal: total, tableD: 2, out: [
+      { l: 'Acero en estribos (neto)', v: total, u: 'kg', main: true },
+      { l: `Con ${f(n(s.desp), 0)}% de desperdicio`, v: total * (1 + desp), u: 'kg' },
+      { l: 'Estribos en total', v: nE, u: 'und', d: 0, buy: s.met === 'perim' ? 'Longitud: perímetro del elemento' : 'Longitud: perímetro interior + ganchos' },
+      ...(bad.length ? [{ l: `Revisa la distribución de la fila ${bad.join(', ')}`, v: 0, u: '', d: 0 }] : []),
+      { sec: 'Por elemento' },
+      ...Object.entries(byE).map(([k, v]) => ({ l: k, v, u: 'kg', sub: true })),
+      { sec: 'Por diámetro' },
+      ...ACERO.filter(([k]) => byD[k]?.m > 0).map(([k, l]) => ({ l: `Ø ${l}`, v: byD[k].kg, u: 'kg', buy: `${f(byD[k].m)} m · comprar ${Math.ceil(byD[k].m * (1 + desp) / Lc - 1e-9)} varillas de ${f(Lc, 0)} m` }))
+    ] };
+  },
+  explain(s, r) {
+    const i = Math.max(0, Math.min(curRow, s.rows.length - 1)), x = s.rows[i], v = r.rows[i];
+    if (!x) return '';
+    const L = this.len(x, s), c = v.c, ex = s.met === 'exact';
+    const alt = this.len(x, { ...s, met: ex ? 'perim' : 'exact' })[0];
+    return `
+      <p>Fila ${i + 1}: ${esc(x.desc)}, ${esc(EST_MAP[x.tipo])}.</p>
+      <h4>1. Cuántos estribos</h4>
+      ${!c.ok ? `<p><b>${c.msg}</b></p>` : c.esp ? `<div class="formula">Vueltas = altura ÷ paso + 3<small>${x.Ln} ÷ ${x.dist} + 3 = ${f(c.count, 1)} vueltas (E.060 pide 1.5 vueltas extra en cada extremo)</small></div>`
+        : c.simple ? `<p>Escribiste el número directo: <b>${c.count}</b> estribos por elemento.</p>`
+        : `<div class="formula">Por extremo: ${c.groups.map(g => `${g.n}@${f(g.s)}`).join(' + ')} = ${c.perEnd} estribos en ${f(c.used)} m<small>Centro: ${f(x.Ln)} − 2 × ${f(c.used)} = ${f(c.rem)} m${c.resto ? ` → ${c.nc} estribos @ ${f(c.resto)} como máximo` : ''}. Total = 2 × ${c.perEnd} + ${c.nc} = ${c.count}</small></div>
+        ${c.over ? '<p><b>Ojo:</b> las zonas de los extremos suman más que la luz libre. Revisa la distribución.</p>' : ''}`}
+      <h4>2. Longitud de cada estribo</h4>
+      <div class="formula">${L[1]}<small>= ${f(L[0])} m por ${c.esp ? 'vuelta' : 'estribo'}${ex ? `; a′ y b′ son las medidas interiores (a − 2r, b − 2r)` : ''}</small></div>
+      <p>Con la otra forma saldría <b>${f(alt)} m</b>. La forma del perímetro es rápida y queda un poco por encima: lo que sobra compensa los ganchos y dobleces. La forma exacta descuenta el recubrimiento y suma los dos ganchos de 135°.</p>
+      <h4>3. Peso</h4>
+      <div class="formula">Peso = N° elementos × estribos × longitud × kg/m<small>${x.nv} × ${f(v.ne, c.esp ? 1 : 0)} × ${f(v.le)} × ${f(ACERO_MAP[x.d]?.p || 0, 3)} = ${f(v.kg)} kg</small></div>
+      <h4>Tipos de estribo</h4>
+      <ul>
+        <li><b>Rectangular simple:</b> el más común, abraza las 4 barras de esquina.</li>
+        <li><b>Con grapas:</b> cuando hay barras intermedias, una grapa (gancho suplementario) amarra la barra del medio.</li>
+        <li><b>Doble estribo:</b> dos estribos rectangulares que se traslapan, en columnas anchas.</li>
+        <li><b>Con rombo:</b> estribo exterior más uno en forma de rombo que amarra las barras centrales de cada cara.</li>
+        <li><b>Circular y espiral:</b> en columnas circulares. La espiral (zuncho) es continua y se mide por vueltas.</li>
+        <li><b>En U:</b> abierto, se usa en vigas chatas o con un fierro de cierre arriba.</li>
+      </ul>
+      <p class="warn">Zonas de confinamiento (referencial, revisa el capítulo 21 de E.060 y tu plano): en vigas, el primer estribo a 5 o 10 cm de la cara y espaciamiento reducido en una longitud de 2 veces el peralte; en columnas, espaciamiento reducido en el mayor de: luz libre/6, la mayor dimensión de la sección o 50 cm.</p>`;
+  },
+  fig(s, row) {
+    if (!row) return null;
+    const c = this.count(row), L = this.len(row, s);
+    return { svg: figEst(row, s, c), cap: EST_MAP[row.tipo] || '', formula: `${c.ok ? (c.esp ? f(c.count, 1) + ' vueltas' : c.count + ' estribos') : 'Revisa la distribución'} × ${f(L[0])} m<small>${L[1]}</small>` };
+  }
+},
+{
+  id: 'losa', group: 'Concreto armado', title: 'Losa aligerada', short: 'Concreto y ladrillo de techo', unit: 'm²',
+  norma: ['Norma Técnica de Metrados', 'RNE E.060'],
+  intro: 'Losa en una dirección con viguetas. Calcula el área, los bloques de techo (ladrillo de arcilla o casetón de poliestireno) y el concreto de viguetas y losa superior.',
+  fields: [
+    { k: 'h', label: 'Espesor de losa (h)', type: 'select', options: [['0.17', '17 cm (ladrillo de 12)'], ['0.20', '20 cm (ladrillo de 15)'], ['0.25', '25 cm (ladrillo de 20)'], ['0.30', '30 cm (ladrillo de 25)']], hint: 'Regla práctica: h ≈ luz libre / 25.' },
+    { k: 'blk', label: 'Bloque de techo', type: 'select', options: [['lad', 'Ladrillo de arcilla 30 × 30'], ['eps', 'Casetón de poliestireno (EPS)']], presets: { lad: { wl: '0.30', ll: '0.30' }, eps: { wl: '0.30', ll: '1.20' } } },
+    { k: 'fc', label: 'Concreto', type: 'select', options: FC_ARM },
+    { k: 'tl', label: 'Losa superior', unit: 'm', hint: 'Normalmente 5 cm.' },
+    { k: 'bw', label: 'Ancho de vigueta', unit: 'm' },
+    { k: 'wl', label: 'Ancho del bloque', unit: 'm' },
+    { k: 'll', label: 'Largo del bloque', unit: 'm', hint: 'Medidas del casetón varían por fabricante.' },
+    { k: 'dl', label: 'Desperdicio de bloques', unit: '%' },
+    { k: 'dc', label: 'Desperdicio de concreto', unit: '%' }
+  ],
+  defaults: () => ({ h: '0.20', blk: 'lad', fc: '210', tl: '0.05', bw: '0.10', wl: '0.30', ll: '0.30', dl: '5', dc: '5', rows: [
+    { desc: 'Paño 1 (ejes 1-2 / A-B)', nv: '1', L: '4.00', A: '3.75' },
+    { desc: 'Paño 2 (ejes 2-3 / A-B)', nv: '1', L: '3.50', A: '3.75' }
+  ] }),
+  table: {
+    title: 'Paños de losa',
+    cols: [
+      { k: 'desc', label: 'Paño', type: 'text' },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo libre (m)', type: 'num' },
+      { k: 'A', label: 'Ancho libre (m)', type: 'num' }
+    ],
+    calcCols: [{ k: 'area', label: 'Área (m²)', d: 2 }],
+    footer: 'Área total',
+    newRow: () => ({ desc: '', nv: '1', L: '', A: '' }),
+    note: 'Mide cada paño entre caras de vigas (luz libre). Las vigas se metran en la hoja Columnas, vigas y losas.'
+  },
+  calc(s) {
+    const h = n(s.h), tl = n(s.tl), bw = n(s.bw), wl = n(s.wl), ll = n(s.ll);
+    const hl = Math.max(h - tl, 0);
+    const nl = (bw + wl) > 0 && ll > 0 ? (1 / (bw + wl)) * (1 / ll) : 0;
+    const vc = Math.max(h - nl * wl * ll * hl, 0);
+    return { h, tl, bw, wl, ll, hl, nl, vc };
+  },
+  compute(s) {
+    const rows = s.rows.map(r => ({ area: n(r.nv) * n(r.L) * n(r.A) }));
+    const A = sum(rows, 'area'), c = this.calc(s);
+    const dl = n(s.dl) / 100, dc = n(s.dc) / 100;
+    const lad = A * c.nl * (1 + dl), vol = A * c.vc;
+    const mats = {}; addMats(mats, CONC[s.fc] || CONC['210'], vol * (1 + dc));
+    const nm = s.blk === 'eps' ? 'Casetones EPS' : 'Ladrillos de techo';
+    return { rows, tableTotal: A, tableD: 2, c, A, vol, out: [
+      { l: 'Área de losa aligerada', v: A, u: 'm²', main: true },
+      { sec: 'Bloques de techo' },
+      { l: `${nm} por m²`, v: c.nl, u: 'und/m²' },
+      { l: `${nm} ${f(c.wl * 100, 0)}×${f(c.ll * 100, 0)}×${f(c.hl * 100, 0)} cm (con ${f(n(s.dl), 0)}%)`, v: Math.ceil(lad - 1e-9), u: 'und', d: 0 },
+      { sec: 'Concreto' },
+      { l: 'Concreto por m² de losa', v: c.vc, u: 'm³/m²', d: 4 },
+      { l: 'Concreto neto', v: vol, u: 'm³', d: 3 },
+      { l: `Concreto con ${f(n(s.dc), 0)}% de desperdicio`, v: vol * (1 + dc), u: 'm³', d: 3 },
+      { sec: 'Materiales del concreto' },
+      ...matsOut(mats, 'Arena gruesa')
+    ] };
+  },
+  explain(s, r) {
+    const c = r.c;
+    return `
+      <p>En 1 m² de losa entran viguetas cada <b>${f(c.bw + c.wl)} m</b> (vigueta de ${f(c.bw)} m + bloque de ${f(c.wl)} m). En la otra dirección entran bloques de ${f(c.ll)} m de largo:</p>
+      <div class="formula">Bloques/m² = 1/(${f(c.bw)} + ${f(c.wl)}) × 1/${f(c.ll)} = ${f(c.nl)}</div>
+      <p>El concreto es el volumen total de la losa menos el volumen de los bloques. La altura del bloque es h − losa superior = ${f(c.h)} − ${f(c.tl)} = ${f(c.hl)} m:</p>
+      <div class="formula">Concreto/m² = h − bloques/m² × ancho × largo × alto<small>${f(c.h)} − ${f(c.nl)} × ${f(c.wl)} × ${f(c.ll)} × ${f(c.hl)} = ${f(c.vc, 4)} m³/m²</small></div>
+      ${refTable(['Espesor h', 'Ladrillo de techo', 'Ladrillos/m²', 'Concreto (m³/m²)'], [0.17, 0.20, 0.25, 0.30].map(h => ({ key: Math.abs(h - c.h) < 1e-6 ? 'x' : null, cells: [`${f(h * 100, 0)} cm`, `30×30×${f((h - 0.05) * 100, 0)}`, '8.33', f(h - 8.3333 * 0.09 * (h - 0.05), 4)] })), 'x')}
+      <p>Valores típicos con vigueta de 10 cm, ladrillo de 30×30 y losa superior de 5 cm.</p>
+      <h4>Criterios</h4>
+      <ul>
+        <li>El área se mide entre caras de vigas. Las vigas y su concreto se metran aparte.</li>
+        <li>Los bloques se cuentan por m² de losa; en los extremos de paño se pierde algo, por eso el desperdicio.</li>
+        <li>El acero de viguetas y de temperatura va en la hoja de acero, y el encofrado del fondo en la de encofrado.</li>
+      </ul>`;
+  },
+  fig: s => ({ svg: figLosa(s), cap: 'Corte transversal a las viguetas', formula: 'Módulo = vigueta + bloque' })
+},
+{
+  id: 'muro', group: 'Arquitectura', title: 'Muros de ladrillo', short: 'Ladrillos y mortero por tipo', unit: 'm²',
+  norma: ['RNE E.070', 'Norma Técnica de Metrados'],
+  intro: 'Metrado de muros por área neta con el ladrillo y el aparejo de cada uno. Calcula ladrillos y mortero para King Kong, pandereta, bloque de concreto o un ladrillo con tus medidas.',
+  fields: [
+    { k: 'jh', label: 'Junta horizontal', unit: 'cm' },
+    { k: 'jv', label: 'Junta vertical', unit: 'cm', hint: 'E.070: entre 1.0 y 1.5 cm.' },
+    { k: 'mez', label: 'Mortero C:A', type: 'select', options: Object.keys(MORTERO).map(k => [k, k]) },
+    { k: 'dl', label: 'Desperdicio de ladrillo', unit: '%' },
+    { k: 'dm', label: 'Desperdicio de mortero', unit: '%' },
+    { k: 'cL', label: 'Personalizado · largo', unit: 'cm' },
+    { k: 'ca', label: 'Personalizado · ancho', unit: 'cm' },
+    { k: 'ch', label: 'Personalizado · alto', unit: 'cm' }
+  ],
+  defaults: () => ({ jh: '1.5', jv: '1.5', mez: '1:4', dl: '5', dm: '10', cL: '24', ca: '12', ch: '8', rows: [
+    { desc: 'Eje A (portante)', lad: 'kk18', ap: 'soga', nv: '1', L: '8.00', H: '2.60', vn: '2.10' },
+    { desc: 'Eje 2 (portante)', lad: 'kk18', ap: 'cabeza', nv: '1', L: '3.75', H: '2.60', vn: '0.00' },
+    { desc: 'Tabique baño', lad: 'pand', ap: 'soga', nv: '1', L: '2.50', H: '2.40', vn: '1.60' },
+    { desc: 'Cerco perimétrico', lad: 'bc14', ap: 'soga', nv: '1', L: '12.00', H: '2.40', vn: '0.00' }
+  ] }),
+  table: {
+    title: 'Metrado de muros',
+    cols: [
+      { k: 'desc', label: 'Muro', type: 'text' },
+      { k: 'lad', label: 'Ladrillo', type: 'select', options: Object.entries(LADRILLOS).map(([k, v]) => [k, v.l]) },
+      { k: 'ap', label: 'Aparejo', type: 'select', options: APAREJO },
+      { k: 'nv', label: 'N° veces', type: 'num' },
+      { k: 'L', label: 'Largo (m)', type: 'num' },
+      { k: 'H', label: 'Alto (m)', type: 'num' },
+      { k: 'vn', label: 'Vanos (m²)', type: 'num' }
+    ],
+    calcCols: [{ k: 'area', label: 'Área neta (m²)', d: 2 }, { k: 'nl', label: 'Lad./m²', d: 2 }, { k: 'lad', label: 'Ladrillos', d: 0 }, { k: 'mor', label: 'Mortero (m³)', d: 3 }],
+    footer: 'Total',
+    newRow: () => ({ desc: '', lad: 'kk18', ap: 'soga', nv: '1', L: '', H: '', vn: '0' }),
+    note: 'Largo entre caras de columnas y alto hasta el fondo de viga o losa. En “Vanos” escribe el área de puertas y ventanas de ese muro. Toca una fila para ver 1 m² de ese muro.'
+  },
+  geo(r, s) {
+    const d = ladDims(r.lad, s), g = brickGeom(d, r.ap), jh = n(s.jh) / 100, jv = n(s.jv) / 100;
+    const vw = g.vw / 100, vh = g.vh / 100, esp = g.esp / 100;
+    const nl = (vw + jv) > 0 && (vh + jh) > 0 ? 1 / ((vw + jv) * (vh + jh)) : 0;
+    const vm = Math.max(esp - nl * (d.L * d.a * d.h) / 1e6, 0);
+    return { d, vw, vh, esp, nl, vm, jh, jv };
+  },
+  compute(s) {
+    const dl = n(s.dl) / 100, dm = n(s.dm) / 100;
+    const rows = s.rows.map(r => { const g = this.geo(r, s), area = Math.max(n(r.nv) * (n(r.L) * n(r.H) - n(r.vn)), 0); return { area, nl: g.nl, lad: area * g.nl, mor: area * g.vm, g }; });
+    const A = sum(rows, 'area'), mor = sum(rows, 'mor') * (1 + dm), d = MORTERO[s.mez] || MORTERO['1:4'];
+    const byL = {};
+    s.rows.forEach((r, i) => { const k = `${LADRILLOS[r.lad]?.l || r.lad}`; byL[k] = (byL[k] || 0) + rows[i].lad; });
+    const byA = {};
+    s.rows.forEach((r, i) => { const k = `Muro de ${r.ap} · ${LADRILLOS[r.lad]?.l || ''}`; byA[k] = (byA[k] || 0) + rows[i].area; });
+    return { rows, tableTotal: A, tableD: 2, A, out: [
+      { l: 'Área neta de muros', v: A, u: 'm²', main: true },
+      ...Object.entries(byA).map(([k, v]) => ({ l: k, v, u: 'm²', sub: true })),
+      { sec: `Ladrillos (con ${f(n(s.dl), 0)}% de desperdicio)` },
+      ...Object.entries(byL).map(([k, v]) => ({ l: k, v: Math.ceil(v * (1 + dl) - 1e-9), u: 'und', d: 0 })),
+      { sec: `Mortero ${s.mez} (con ${f(n(s.dm), 0)}%)` },
+      { l: 'Mortero total', v: mor, u: 'm³', d: 3 },
+      ...matsOut({ cem: d.cem * mor, arena: d.arena * mor, agua: d.agua * mor }, 'Arena gruesa')
+    ] };
+  },
+  explain(s, r) {
+    const i = Math.max(0, Math.min(curRow, s.rows.length - 1)), x = s.rows[i];
+    if (!x) return '';
+    const g = r.rows[i].g;
+    return `
+      <p>Fila ${i + 1}: ${esc(LADRILLOS[x.lad]?.l)} de ${g.d.L} × ${g.d.a} × ${g.d.h} cm en aparejo de <b>${x.ap}</b>. Se ve una cara de ${f(g.vw * 100, 0)} × ${f(g.vh * 100, 0)} cm y el muro tiene ${f(g.esp * 100, 0)} cm de espesor. Cada ladrillo ocupa su cara más una junta:</p>
+      <div class="formula">Ladrillos/m² = 1 / [(cara horizontal + jv) × (cara vertical + jh)]<small>1 / [(${f(g.vw)} + ${f(g.jv, 3)}) × (${f(g.vh)} + ${f(g.jh, 3)})] = ${f(g.nl)} und/m²</small></div>
+      <div class="formula">Mortero/m² = espesor − ladrillos/m² × volumen de un ladrillo<small>${f(g.esp)} − ${f(g.nl)} × (${f(g.d.L / 100)} × ${f(g.d.a / 100)} × ${f(g.d.h / 100)}) = ${f(g.vm, 4)} m³/m²</small></div>
+      <h4>Aparejos</h4>
+      <ul>
+        <li><b>Soga:</b> se ve el lado largo; espesor = ancho del ladrillo. El más común en tabiques y muros portantes de 13 cm.</li>
+        <li><b>Cabeza:</b> se ve el extremo; espesor = largo del ladrillo (muros de 24 cm).</li>
+        <li><b>Canto:</b> el ladrillo va “echado de lado”; espesor = alto del ladrillo. Muros delgados de poca importancia.</li>
+      </ul>
+      <h4>Catálogo de ladrillos</h4>
+      ${refTable(['Ladrillo', 'Largo', 'Ancho', 'Alto (cm)', 'Uso'], Object.entries(LADRILLOS).filter(([, v]) => v.L).map(([k, v]) => ({ key: s.rows.some(q => q.lad === k) ? 'x' : null, cells: [v.l, v.L, v.a, v.h, /King/.test(v.l) ? 'Muros portantes' : /Pandereta/.test(v.l) ? 'Tabiques, no portante' : 'Cercos y muros de bloque'] })), 'x')}
+      ${morteroRef(s.mez)}
+      <p class="warn">Medidas nominales de catálogo; cambian un poco según la fábrica. Si tu ladrillo es distinto, elige “Personalizado” y escribe sus medidas en Datos.</p>`;
+  },
+  fig(s, row) { if (!row) return null; const g = this.geo(row, s); return { svg: figMuro(row, s), cap: `${LADRILLOS[row.lad]?.l} · ${row.ap}`, formula: `≈ ${f(g.nl, 1)} ladrillos en 1 m²` }; }
+},
+{
+  id: 'tarrajeo', group: 'Arquitectura', title: 'Tarrajeo', short: 'Mortero por m²', unit: 'm²',
+  norma: ['Norma Técnica de Metrados'],
+  intro: 'Revoque de muros, cielorrasos o columnas. Ingresa el área y el espesor para obtener el mortero y sus materiales.',
+  fields: [
+    { k: 'area', label: 'Área a tarrajear', unit: 'm²', hint: 'Muros: área neta por cada cara. Revisa el criterio de vanos de tu curso.' },
+    { k: 'e', label: 'Espesor del tarrajeo', unit: 'cm', hint: 'Usual: 1.5 cm en muros, 1.0 cm en cielorraso.' },
+    { k: 'mez', label: 'Mortero C:A', type: 'select', options: Object.keys(MORTERO).map(k => [k, k]) },
+    { k: 'dm', label: 'Desperdicio de mortero', unit: '%' }
+  ],
+  defaults: () => ({ area: '40', e: '1.5', mez: '1:5', dm: '10' }),
+  calc(s) {
+    const e = n(s.e) / 100, dm = n(s.dm) / 100, d = MORTERO[s.mez] || MORTERO['1:5'];
+    return { e, dm, d, vm2: e * (1 + dm) };
+  },
+  compute(s) {
+    const c = this.calc(s), A = n(s.area), vt = A * c.vm2;
+    return { c, A, vt, out: [
+      { l: 'Mortero total', v: vt, u: 'm³', d: 3, main: true },
+      { l: 'Mortero por m² (con desperdicio)', v: c.vm2, u: 'm³/m²', d: 4 },
+      { sec: `Materiales del mortero ${s.mez}` },
+      ...matsOut({ cem: c.d.cem * vt, arena: c.d.arena * vt, agua: c.d.agua * vt }, 'Arena fina'),
+      { sec: 'Por cada m² (para el APU)' },
+      { l: 'Cemento', v: c.d.cem * c.vm2, u: 'bls/m²', d: 4 },
+      { l: 'Arena fina', v: c.d.arena * c.vm2, u: 'm³/m²', d: 4 },
+      { l: 'Agua', v: c.d.agua * c.vm2, u: 'm³/m²', d: 4 }
+    ] };
+  },
+  explain(s, r) {
+    const c = r.c;
+    return `
+      <div class="formula">Mortero = Área × espesor × (1 + desperdicio)<small>${f(r.A)} × ${f(c.e, 3)} × ${f(1 + c.dm)} = ${f(r.vt, 3)} m³</small></div>
+      <p>Luego multiplicas por la dosificación del mortero ${s.mez}:</p>
+      ${morteroRef(s.mez)}
+      <p>Las cantidades “por cada m²” son las que se copian al análisis de precio unitario. En la hoja APU hay un botón que las trae directamente.</p>
+      <h4>Criterios</h4>
+      <ul>
+        <li>Tarrajeo de muros interiores, exteriores, cielorrasos y columnas son partidas distintas, cada una en m².</li>
+        <li>Un muro tarrajeado por las dos caras cuenta dos veces su área.</li>
+        <li>Las vestiduras de derrames (bordes de vanos) se metran aparte, en metros lineales.</li>
+      </ul>`;
+  },
+  fig: () => ({ svg: figTar(), cap: 'Muro tarrajeado por ambas caras', formula: 'Volumen = área × e' })
+},
+{
+  id: 'apu', group: 'Costos', title: 'Análisis de precio unitario', short: 'Costo por unidad de partida', unit: 'S/',
+  norma: ['Rendimientos CAPECO', 'Formato S10'],
+  intro: 'Arma el costo directo de una partida por unidad: mano de obra según cuadrilla y rendimiento, materiales según metrado, y equipos.',
+  fields: [
+    { k: 'partida', label: 'Partida', type: 'text' },
+    { k: 'und', label: 'Unidad', type: 'text', hint: 'm², m³, kg, und…' },
+    { k: 'rend', label: 'Rendimiento', unit: 'und/día', hint: 'Cuánto avanza la cuadrilla en una jornada.' },
+    { k: 'jor', label: 'Jornada', unit: 'h/día' },
+    { k: 'herr', label: 'Herramientas manuales', unit: '% MO', hint: 'Usual: 3% a 5% de la mano de obra.' }
+  ],
+  defaults: () => ({ partida: 'Tarrajeo frotachado de muros interiores, e = 1.5 cm, mortero 1:5', und: 'm²', rend: '10', jor: '8', herr: '3', rows: [
+    { tipo: 'MO', desc: 'Operario', u: 'hh', cu: '1', q: '', p: '29.50' },
+    { tipo: 'MO', desc: 'Peón', u: 'hh', cu: '0.5', q: '', p: '21.40' },
+    { tipo: 'MAT', desc: 'Cemento portland tipo I (42.5 kg)', u: 'bls', cu: '', q: '0.1221', p: '31.00' },
+    { tipo: 'MAT', desc: 'Arena fina', u: 'm³', cu: '', q: '0.0173', p: '75.00' },
+    { tipo: 'MAT', desc: 'Agua', u: 'm³', cu: '', q: '0.0043', p: '6.00' },
+    { tipo: 'EQ', desc: 'Andamio metálico', u: 'hm', cu: '1', q: '', p: '1.20' }
+  ] }),
+  table: {
+    title: 'Recursos de la partida',
+    cols: [
+      { k: 'tipo', label: 'Tipo', type: 'select', options: [['MO', 'Mano de obra'], ['MAT', 'Material'], ['EQ', 'Equipo']] },
+      { k: 'desc', label: 'Recurso', type: 'text' },
+      { k: 'u', label: 'Und.', type: 'short' },
+      { k: 'cu', label: 'Cuadrilla', type: 'num' },
+      { k: 'q', label: 'Cantidad', type: 'num' },
+      { k: 'p', label: 'Precio (S/)', type: 'num' }
+    ],
+    calcCols: [{ k: 'qq', label: 'Cant. usada', d: 4 }, { k: 'par', label: 'Parcial (S/)', d: 2 }],
+    footer: 'Suma de recursos',
+    newRow: () => ({ tipo: 'MAT', desc: '', u: '', cu: '', q: '', p: '' }),
+    note: 'Si escribes una cuadrilla, la cantidad se calcula sola (cuadrilla × jornada ÷ rendimiento). Si la dejas vacía, se usa la cantidad que escribas.',
+    actions: '<button class="btn" type="button" data-act="import">Traer materiales de la hoja Tarrajeo</button>'
+  },
+  compute(s) {
+    const rend = n(s.rend), jor = n(s.jor);
+    const rows = s.rows.map(r => { const cu = n(r.cu); const qq = cu > 0 ? (rend > 0 ? cu * jor / rend : 0) : n(r.q); return { qq, par: qq * n(r.p) }; });
+    const t = { MO: 0, MAT: 0, EQ: 0 };
+    s.rows.forEach((r, i) => t[r.tipo] = (t[r.tipo] || 0) + rows[i].par);
+    const herr = t.MO * n(s.herr) / 100;
+    const cu = t.MO + t.MAT + t.EQ + herr;
+    const und = s.und || 'und';
+    return { rows, tableTotal: t.MO + t.MAT + t.EQ, tableD: 2, t, herr, out: [
+      { l: `Costo unitario directo por ${esc(und)}`, v: cu, u: 'S/', main: true },
+      { l: 'Mano de obra', v: t.MO, u: 'S/' },
+      { l: 'Materiales', v: t.MAT, u: 'S/' },
+      { l: 'Equipos', v: t.EQ, u: 'S/' },
+      { l: `Herramientas manuales (${f(n(s.herr), 0)}% MO)`, v: herr, u: 'S/' },
+      { sec: 'Datos de la partida' },
+      { l: 'Rendimiento', v: rend, u: `${esc(und)}/día` },
+      { l: 'Horas-hombre por unidad', v: s.rows.reduce((a, r, i) => a + (r.tipo === 'MO' ? rows[i].qq : 0), 0), u: `hh/${esc(und)}`, d: 4 }
+    ] };
+  },
+  explain(s, r) {
+    const i = s.rows.findIndex(x => x.tipo === 'MO' && n(x.cu) > 0);
+    const x = s.rows[i];
+    return `
+      <div class="formula">Cantidad (hh/und) = cuadrilla × jornada ÷ rendimiento</div>
+      ${x ? `<p>${esc(x.desc)}: ${x.cu} × ${s.jor} ÷ ${s.rend} = ${f(r.rows[i].qq, 4)} hh por ${esc(s.und)}; × S/ ${x.p} = <b>S/ ${f(r.rows[i].par)}</b>.</p>` : ''}
+      <p>Los materiales usan las cantidades por unidad que salen del metrado (por ejemplo, la hoja Tarrajeo da cemento, arena y agua por m²). Los equipos que trabajan con la cuadrilla también se calculan con cuadrilla y rendimiento.</p>
+      <div class="formula">Costo unitario = MO + Materiales + Equipos + % herramientas<small>${f(r.t.MO)} + ${f(r.t.MAT)} + ${f(r.t.EQ)} + ${f(r.herr)} = S/ ${f(r.t.MO + r.t.MAT + r.t.EQ + r.herr)}</small></div>
+      <h4>Siguiente paso</h4>
+      <ul>
+        <li>Presupuesto: costo directo de cada partida = metrado × costo unitario.</li>
+        <li>Luego se suman gastos generales, utilidad e IGV (18%).</li>
+      </ul>
+      <p class="warn">Los precios de mano de obra y materiales son solo de ejemplo. Reemplázalos con la tabla vigente de construcción civil y las cotizaciones de tu zona.</p>`;
+  }
+}];
+const SHEET = Object.fromEntries(SHEETS.map(s => [s.id, s]));
+
+/* ---------- estado ---------- */
+const STORE = 'cuaderno-metrados-v2';
+let state = {};
+try {
+  const s = JSON.parse(localStorage.getItem(STORE));
+  if (s && typeof s === 'object') state = s;
+  else {
+    const old = JSON.parse(localStorage.getItem('cuaderno-metrados-v1'));
+    if (old && typeof old === 'object') {
+      for (const k of ['losa', 'tarrajeo', 'apu']) if (old[k]) state[k] = old[k];
+      if (old.losa && !old.losa.blk) state.losa.blk = 'lad';
+      if (old.acero?.rows) state.acero = { ...SHEET.acero.defaults(), ...old.acero, rows: old.acero.rows.map(r => ({ el: /^Z/.test(r.desc) ? 'Zapata' : /^V/.test(r.desc) ? 'Viga' : /^C/.test(r.desc) ? 'Columna' : 'Otro', ...r })) };
+    }
+  }
+} catch (e) {}
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+const st = id => (state[id] && typeof state[id] === 'object') ? state[id] : (state[id] = SHEET[id].defaults());
+if (state.acero && !state.acero.incE) state.acero.incE = 'no';
+let cur = SHEETS[0].id, curRow = 0;
+
+/* ---------- render ---------- */
+function renderNav() {
+  let g = '';
+  $('#nav').innerHTML = SHEETS.map((s, i) => {
+    const head = s.group !== g ? `<li class="nav-group">${(g = s.group)}</li>` : '';
+    return `${head}<li><button type="button" data-go="${s.id}" aria-current="${s.id === cur}"><span class="k">${String(i + 1).padStart(2, '0')}</span><span class="t">${s.title}</span><span class="s">${s.short}</span></button></li>`;
+  }).join('');
+}
+function fieldHTML(fd, v) {
+  const id = `f-${cur}-${fd.k}`;
+  const ctrl = fd.type === 'select'
+    ? `<select id="${id}" data-k="${fd.k}">${fd.options.map(([val, l]) => `<option value="${esc(val)}"${String(v) === String(val) ? ' selected' : ''}>${l}</option>`).join('')}</select>`
+    : `<input id="${id}" data-k="${fd.k}" type="text" ${fd.type === 'text' ? '' : 'inputmode="decimal"'} value="${esc(v)}" autocomplete="off">`;
+  return `<div class="field${fd.type === 'text' && fd.k === 'partida' ? ' wide' : ''}"><label for="${id}">${fd.label}</label><div class="cell in">${ctrl}${fd.unit ? `<span class="u">${fd.unit}</span>` : ''}</div>${fd.hint ? `<p class="hint">${fd.hint}</p>` : ''}</div>`;
+}
+function cellCtrl(c, v, i) {
+  const id = `t-${cur}-${i}-${c.k}`, lab = `aria-label="${esc(c.label)} fila ${i + 1}"`;
+  if (c.type === 'select') return `<select id="${id}" data-r="${i}" data-col="${c.k}" ${lab}>${c.options.map(([val, l]) => `<option value="${esc(val)}"${String(v) === String(val) ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  return `<input id="${id}" data-r="${i}" data-col="${c.k}" ${lab} type="text" ${c.type === 'text' ? 'class="txt"' : c.type === 'num' ? 'inputmode="decimal"' : ''} value="${esc(v)}" autocomplete="off">`;
+}
+function tableHTML(sh, s) {
+  const t = sh.table, span = t.cols.length + t.calcCols.length - 1;
+  return `<section class="pane">
+    <div class="pane-head"><h3>${t.title}</h3><div class="btn-row" style="margin:0">${t.actions || ''}<button class="btn primary" type="button" data-act="add">+ Agregar fila</button></div></div>
+    <div class="scroll"><table class="grid">
+      <tr><th class="idx">#</th>${t.cols.map(c => `<th>${c.label}</th>`).join('')}${t.calcCols.map(c => `<th class="c">${c.label}</th>`).join('')}<th></th></tr>
+      ${s.rows.map((row, i) => `<tr><td class="idx">${i + 1}</td>${t.cols.map(c => c.when && !c.when(row) ? '<td class="na">—</td>' : `<td class="in">${cellCtrl(c, row[c.k], i)}</td>`).join('')}${t.calcCols.map(c => `<td class="c" data-c="${i}-${c.k}"></td>`).join('')}<td class="acts"><button class="del" type="button" data-dup="${i}" aria-label="Duplicar fila ${i + 1}" title="Duplicar fila">⧉</button><button class="del" type="button" data-del="${i}" aria-label="Eliminar fila ${i + 1}" title="Eliminar fila">×</button></td></tr>`).join('')}
+      <tr class="tot"><td></td><td colspan="${span}">${t.footer}</td><td class="num" data-c="tot"></td><td></td></tr>
+    </table></div>
+    <div class="btn-row"><button class="btn primary" type="button" data-act="add">+ Agregar fila</button></div>
+    ${t.note ? `<p class="table-note">${t.note}</p>` : ''}
+  </section>`;
+}
+function renderSheet() {
+  const sh = SHEET[cur], s = st(cur), idx = SHEETS.indexOf(sh) + 1;
+  if (s.rows && curRow >= s.rows.length) curRow = 0;
+  $('#sheet').innerHTML = `
+    <header class="sheet-head">
+      <p class="eyebrow">Plantilla ${idx} de ${SHEETS.length} · ${sh.group} · se mide en ${sh.unit}</p>
+      <h2>${sh.title}</h2>
+      <p class="lead">${sh.intro}</p>
+      <div class="chips">${sh.norma.map(x => `<span class="chip">${x}</span>`).join('')}</div>
+      <div class="legend-top"><span><i class="sw"></i>Tú llenas</span><span><i class="sw c"></i>Se calcula</span></div>
+    </header>
+    ${sh.fig ? '<section class="pane" id="figpane"></section>' : ''}
+    ${sh.table ? tableHTML(sh, s) : ''}
+    <div class="sheet-grid">
+      <section class="pane"><h3>Datos</h3><div class="fields">${sh.fields.map(fd => fieldHTML(fd, s[fd.k])).join('')}</div></section>
+      <section class="pane res-pane"><h3>Resultados</h3><div id="res"></div>
+        <div class="btn-row"><button class="btn primary" type="button" data-act="xlsx" hidden>Descargar Excel (.xlsx)</button><button class="btn" type="button" data-act="copy">Copiar</button><button class="btn" type="button" data-act="reset">Volver al ejemplo</button><span class="toast" id="toast" role="status"></span></div>
+      </section>
+    </div>
+    <section class="pane"><h3>Cómo se calcula</h3><div class="explain" id="exp"></div></section>`;
+  update();
+  showExport();
+}
+function renderFig() {
+  const sh = SHEET[cur], pane = $('#figpane');
+  if (!sh.fig || !pane) return;
+  const s = st(cur), row = s.rows ? s.rows[curRow] : null, fg = sh.fig(s, row);
+  if (!fg) { pane.hidden = true; return; }
+  pane.hidden = false;
+  pane.innerHTML = `<div class="pane-head"><h3>Esquema</h3>${s.rows ? `<span class="hint">Fila ${curRow + 1}${row?.desc ? ' · ' + esc(row.desc) : ''}</span>` : ''}</div>
+    <div class="fig-pane"><div class="fig">${fg.svg}</div>
+    <div class="fig-cap">${fg.cap ? `<span class="tag">${esc(fg.cap)}</span>` : ''}${fg.formula ? `<div class="formula">${fg.formula}</div>` : ''}
+    <div class="key"><span><i style="background:var(--conc-hi);outline:2px solid var(--accent)"></i>elemento que mides</span><span><i style="background:var(--conc)"></i>concreto</span><span><i style="background:var(--soil)"></i>terreno</span><span><i style="background:var(--brick)"></i>ladrillo</span></div>
+    ${s.rows ? '<p class="hint">Toca cualquier celda de una fila para ver su esquema.</p>' : ''}</div></div>`;
+}
+let lastOut = [];
+function update() {
+  const sh = SHEET[cur], s = st(cur), r = sh.compute(s);
+  if (sh.table) {
+    r.rows.forEach((cr, i) => sh.table.calcCols.forEach(c => { const el = $(`[data-c="${i}-${c.k}"]`); if (el) el.textContent = f(cr[c.k], c.d); }));
+    const tEl = $('[data-c="tot"]'); if (tEl) tEl.textContent = f(r.tableTotal, r.tableD);
+  }
+  lastOut = r.out;
+  $('#res').innerHTML = `<table class="res">${r.out.map(o => o.sec
+    ? `<tr class="sec"><td colspan="3">${o.sec}</td></tr>`
+    : `<tr class="${o.main ? 'main' : o.sub ? 'sub' : ''}"><td class="l">${o.l}${o.buy ? `<span class="buy">${o.buy}</span>` : ''}</td><td class="v">${f(o.v, o.d ?? 2)}</td><td class="u">${o.u}</td></tr>`).join('')}</table>`;
+  $('#exp').innerHTML = sh.explain(s, r);
+  renderFig();
+  save();
+}
+function toast(msg) { const t = $('#toast'); if (!t) return; t.textContent = msg; clearTimeout(toast.h); toast.h = setTimeout(() => t.textContent = '', 2400); }
+function go(id) { if (!SHEET[id]) return; cur = id; curRow = 0; renderNav(); renderSheet(); }
+
+/* ---------- eventos ---------- */
+document.addEventListener('input', e => {
+  const el = e.target, s = st(cur);
+  if (el.tagName === 'SELECT') return;
+  if (el.dataset.k) { s[el.dataset.k] = el.value; update(); }
+  else if (el.dataset.col) { s.rows[+el.dataset.r][el.dataset.col] = el.value; update(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target; if (el.tagName !== 'SELECT') return;
+  const s = st(cur), sh = SHEET[cur];
+  if (el.dataset.k) {
+    s[el.dataset.k] = el.value;
+    const fd = sh.fields.find(x => x.k === el.dataset.k);
+    if (fd?.presets?.[el.value]) { Object.assign(s, fd.presets[el.value]); renderSheet(); $('#' + el.id)?.focus(); }
+    else update();
+  } else if (el.dataset.col) {
+    s.rows[+el.dataset.r][el.dataset.col] = el.value; curRow = +el.dataset.r;
+    renderSheet(); $('#' + el.id)?.focus();
+  }
+});
+document.addEventListener('focusin', e => {
+  const r = e.target.dataset?.r;
+  if (r != null && +r !== curRow) { curRow = +r; renderFig(); if (cur === 'muro' || cur === 'estribos') update(); }
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const sh = SHEET[cur], s = st(cur);
+  if (b.dataset.go) { go(b.dataset.go); $('#sheet').scrollIntoView({ block: 'start' }); return; }
+  if (b.dataset.del != null) { s.rows.splice(+b.dataset.del, 1); renderSheet(); return; }
+  if (b.dataset.dup != null) {
+    const i = +b.dataset.dup, copy = { ...s.rows[i] };
+    if (copy.desc) copy.desc = copy.desc.replace(/(\d+)(?!.*\d)/, m => String(+m + 1));
+    s.rows.splice(i + 1, 0, copy); curRow = i + 1; renderSheet();
+    document.getElementById(`t-${cur}-${i + 1}-desc`)?.focus();
+    return;
+  }
+  const a = b.dataset.act;
+  if (a === 'add') { s.rows.push(sh.table.newRow()); curRow = s.rows.length - 1; renderSheet(); document.querySelector(`[data-r="${s.rows.length - 1}"]`)?.focus(); }
+  if (a === 'reset') { state[cur] = sh.defaults(); curRow = 0; renderSheet(); toast('Se cargó el ejemplo'); }
+  if (a === 'xlsx') { exportXlsx(); return; }
+  if (a === 'copy') {
+    const txt = [sh.title, ...lastOut.map(o => o.sec ? `\n${o.sec}` : `${o.l}\t${f(o.v, o.d ?? 2)}\t${o.u}`)].join('\n');
+    const done = () => toast('Copiado');
+    try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done)); } catch (err) { fallbackCopy(txt, done); }
+  }
+  if (a === 'ent') {
+    const z = SHEET.zap.compute(st('zap')).tableTotal;
+    const cs = st('cim'), cr = SHEET.cim.compute(cs).rows;
+    const c = cs.rows.reduce((acc, r, i) => acc + (/Sobrecimiento/.test(r.tipo) ? 0 : cr[i].vol), 0);
+    s.ent = (z + c).toFixed(3); renderSheet(); toast(`Zapatas ${f(z, 3)} + cimientos ${f(c, 3)} m³`);
+  }
+  if (a === 'import') {
+    const ts = st('tarrajeo'), c = SHEET.tarrajeo.calc(ts);
+    const vals = { 'Cemento': c.d.cem * c.vm2, 'Arena': c.d.arena * c.vm2, 'Agua': c.d.agua * c.vm2 };
+    for (const [k, q] of Object.entries(vals)) {
+      const row = s.rows.find(r => r.tipo === 'MAT' && r.desc.toLowerCase().startsWith(k.toLowerCase()));
+      if (row) row.q = q.toFixed(4);
+      else s.rows.push({ tipo: 'MAT', desc: k === 'Cemento' ? 'Cemento portland tipo I (42.5 kg)' : k === 'Arena' ? 'Arena fina' : 'Agua', u: k === 'Cemento' ? 'bls' : 'm³', cu: '', q: q.toFixed(4), p: '' });
+    }
+    renderSheet(); toast(`Materiales de tarrajeo ${ts.mez}, e = ${ts.e} cm`);
+  }
+});
+
+/* ---------- exportar a Excel ---------- */
+let downloads = null;
+function showExport() { document.querySelectorAll('[data-act="xlsx"], .export-side').forEach(el => el.hidden = !(downloads && window.XLSX)); }
+function sheetAOA(sh, s) {
+  const r = sh.compute(s), aoa = [[sh.title.toUpperCase()], [sh.intro], ['Referencias: ' + sh.norma.join(', ')], []];
+  const val = (fd, v) => fd.type === 'select' ? (fd.options.find(o => String(o[0]) === String(v)) || [, v])[1] : (fd.type === 'text' || fd.type === 'short' ? v : n(v));
+  aoa.push(['DATOS', 'Valor', 'Unidad']);
+  sh.fields.forEach(fd => aoa.push([fd.label, val(fd, s[fd.k]), fd.unit || '']));
+  aoa.push([]);
+  if (sh.table) {
+    const t = sh.table;
+    aoa.push([t.title.toUpperCase()]);
+    aoa.push(['#', ...t.cols.map(c => c.label), ...t.calcCols.map(c => c.label)]);
+    s.rows.forEach((row, i) => aoa.push([i + 1, ...t.cols.map(c => c.when && !c.when(row) ? '' : val(c, row[c.k])), ...t.calcCols.map(c => +(+r.rows[i][c.k] || 0).toFixed(c.d))]));
+    aoa.push(['', t.footer, ...Array(t.cols.length + t.calcCols.length - 2).fill(''), +(+r.tableTotal || 0).toFixed(r.tableD)]);
+    aoa.push([]);
+  }
+  aoa.push(['RESULTADOS', 'Valor', 'Unidad', 'Nota']);
+  r.out.forEach(o => aoa.push(o.sec ? [o.sec.toUpperCase()] : [o.l, +(+o.v || 0).toFixed(o.d ?? 2), o.u, o.buy || '']));
+  return aoa;
+}
+async function exportXlsx() {
+  if (!downloads || !window.XLSX) return;
+  const wb = XLSX.utils.book_new();
+  SHEETS.forEach((sh, i) => {
+    const ws = XLSX.utils.aoa_to_sheet(sheetAOA(sh, st(sh.id)));
+    ws['!cols'] = [{ wch: 40 }, { wch: 24 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, ws, `${i + 1} ${sh.title}`.slice(0, 31));
+  });
+  const data = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  try { await downloads.save({ filename: 'cuaderno-metrados.xlsx', data }); toast('Excel descargado'); }
+  catch (err) {
+    const c = err && err.code;
+    if (c === 'declined') toast('Descarga cancelada');
+    else if (c === 'rate_limited') toast('Espera un momento e inténtalo de nuevo');
+    else if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed', 'extension_not_enabled'].includes(c)) { toast('La descarga no está disponible aquí'); downloads = null; showExport(); }
+    else toast('No se pudo generar el archivo');
+  }
+}
+(async () => { try { downloads = window.claude?.use ? await window.claude.use('downloads') : null; } catch (e) { downloads = null; } showExport(); })();
+
+function fallbackCopy(txt, done) {
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { toast('Selecciona y copia manualmente'); }
+  ta.remove();
+}
+
+const h0 = (location.hash || '').slice(1);
+if (SHEET[h0]) cur = h0;
+renderNav(); renderSheet();
+</script>
+
+</body>
+</html>
