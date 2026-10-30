@@ -1,5 +1,5 @@
 // Guarda la página para usarla sin internet. Versión cambia sola con cada actualización.
-const CACHE = 'metrados-80999e6414';
+const CACHE = 'metrados-e0ea4797b6';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icono-192.png', 'icono-512.png', 'xlsx.full.min.js'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
